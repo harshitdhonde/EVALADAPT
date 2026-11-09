@@ -18,4 +18,8 @@ IDE
 
 OS
 
-.DS_Store
+.DS_Storevenv/
+.venv/
+__pycache__/
+*.pyc
+evaladapt.db
