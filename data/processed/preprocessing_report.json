@@ -1,0 +1,10 @@
+{
+  "rows_in": 579,
+  "bad_dates_dropped": 0,
+  "duplicates_removed": 3,
+  "temp_outliers_set_missing": 2,
+  "zone_attr_missing_filled": 5,
+  "temp_missing_interpolated": 13,
+  "rows_out": 576,
+  "zones": 24
+}
