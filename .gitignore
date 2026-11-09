@@ -21,3 +21,5 @@ IDE
 OS
 
 .DS_Store
+# Local Python virtual environment
+.venv/
