@@ -1,25 +1,26 @@
-Python
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.pyc
+.pytest_cache/
 
-.venv/ venv/ pycache/ *.py[cod] *.pyc .pytest_cache/
-
+# Database
 *.db
 
-Node
+# Node
+node_modules/
+frontend/node_modules/
+frontend/dist/
 
-node_modules/ frontend/node_modules/ frontend/dist/
+# Environment variables
+.env
+.env.*
 
-Environment variables
+# IDE
+.vscode/
+.idea/
 
-.env .env.*
-
-IDE
-
-.vscode/ .idea/
-
-OS
-
-.DS_Storevenv/
-.venv/
-__pycache__/
-*.pyc
-evaladapt.db
+# OS
+.DS_Store
