@@ -1,45 +1,36 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import MainLayout from './components/layout/MainLayout'
-import './App.css'
-
-function Overview() {
-  return (
-    <div className="welcome-section">
-      <span className="eyebrow">CLIMATE ADAPTATION MONITORING</span>
-      <h2>Evaluate. Understand. Adapt.</h2>
-      <p>
-        Monitor the effectiveness, distribution and long-term
-        outcomes of climate adaptation interventions.
-      </p>
-    </div>
-  )
-}
+import "./App.css";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import MainLayout from "./components/layout/MainLayout";
+import Overview from "./pages/Overview";
+import Interventions from "./pages/Interventions";
+import Evaluation from "./pages/Evaluation";
+import ImpactEquity from "./pages/ImpactEquity";
+import Diagnosis from "./pages/Diagnosis";
+import Reports from "./pages/Reports";
 
 function Placeholder({ title }) {
   return (
-    <div className="welcome-section">
-      <span className="eyebrow">EVALADAPT MODULE</span>
-      <h2>{title}</h2>
-      <p>This module is being developed.</p>
+    <div className="placeholder-page">
+      <div className="eyebrow">EVALADAPT WORKSPACE</div>
+      <h1>{title}</h1>
+      <p>This module will be connected to the evaluation engine.</p>
     </div>
-  )
+  );
 }
 
-function App() {
+export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route element={<MainLayout />}>
           <Route path="/" element={<Overview />} />
-          <Route path="/interventions" element={<Placeholder title="Interventions & Data" />} />
-          <Route path="/evaluation" element={<Placeholder title="Impact Evaluation" />} />
-          <Route path="/equity" element={<Placeholder title="Impact & Equity" />} />
-          <Route path="/diagnosis" element={<Placeholder title="AI-Assisted Diagnosis" />} />
-          <Route path="/reports" element={<Placeholder title="Reports & Decisions" />} />
+          <Route path="/interventions" element={<Interventions />} />
+          <Route path="/evaluation" element={<Evaluation />} />
+          <Route path="/equity" element={<ImpactEquity />} />
+          <Route path="/diagnosis" element={<Diagnosis />} />
+          <Route path="/reports" element={<Reports />} />
         </Route>
       </Routes>
     </BrowserRouter>
-  )
+  );
 }
-
-export default App
