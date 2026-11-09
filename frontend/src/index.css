@@ -2,26 +2,36 @@
 
 :root {
   font-family: 'DM Sans', sans-serif;
-  color: #172b35;
-  background: #f5f8f8;
+  color: #372b37;
+  background: #f5eee5;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  --navy: #102c36;
-  --teal: #168c7a;
-  --background: #f5f8f8;
-  --border: #e5ebeb;
-  --muted: #788b91;
+  --plum: #432b43;
+  --plum-soft: #785b76;
+  --ink: #372b37;
+  --milk: #eee3d7;
+  --milk-light: #f6f0e8;
+  --background: #f5eee5;
+  --surface: #fffdf9;
+  --border: #e9dfd6;
+  --muted: #817780;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  min-width: 320px;
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background: var(--background);
 }
 
 button, input, select {
@@ -30,6 +40,12 @@ button, input, select {
 
 a {
   text-decoration: none;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid #a783a0;
+  outline-offset: 3px;
 }
 
 #root {

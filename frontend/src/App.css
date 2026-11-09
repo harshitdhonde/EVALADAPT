@@ -6,8 +6,8 @@
 .sidebar {
   width: 250px;
   min-height: 100vh;
-  background: var(--navy);
-  color: #fff;
+  background: var(--plum);
+  color: #fffdf9;
   padding: 28px 17px 20px;
   display: flex;
   flex-direction: column;
@@ -25,11 +25,11 @@
 .brand-icon {
   width: 42px;
   height: 42px;
-  background: #1b655f;
+  background: #614660;
   border-radius: 12px;
   display: grid;
   place-items: center;
-  color: #a4e4ce;
+  color: #ead7e4;
 }
 
 .brand h2 {
@@ -38,12 +38,12 @@
   font-weight: 800;
   letter-spacing: 0.5px;
   margin: 0;
-  color: white;
+  color: #fffdf9;
 }
 
 .brand span {
   font-size: 10px;
-  color: #a9bdc1;
+  color: #d3bfd0;
   letter-spacing: 0.4px;
 }
 
@@ -51,7 +51,7 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 1.3px;
-  color: #829ba2;
+  color: #b7a0b7;
   padding-left: 12px;
   margin-bottom: 14px;
 }
@@ -68,20 +68,20 @@
   gap: 13px;
   padding: 12px;
   border-radius: 8px;
-  color: #b7c9cd;
+  color: #e0d3de;
   font-size: 13px;
   font-weight: 500;
   transition: 0.2s ease;
 }
 
 .nav-link:hover {
-  background: #1a414a;
-  color: white;
+  background: #594158;
+  color: #fffdf9;
 }
 
 .nav-link.active {
-  background: #1b655f;
-  color: white;
+  background: #735570;
+  color: #fffdf9;
 }
 
 .sidebar-footer {
@@ -90,8 +90,8 @@
   align-items: center;
   gap: 9px;
   padding: 14px 10px;
-  border-top: 1px solid #294650;
-  color: #a9bdc1;
+  border-top: 1px solid #654f64;
+  color: #d3bfd0;
   font-size: 11px;
 }
 
@@ -99,7 +99,7 @@
   height: 8px;
   width: 8px;
   border-radius: 50%;
-  background: #65d6a2;
+  background: #b8c99a;
 }
 
 .main-area {
@@ -110,7 +110,7 @@
 .topbar {
   min-height: 105px;
   padding: 22px 36px;
-  background: white;
+  background: var(--surface);
   border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
@@ -131,14 +131,14 @@
   font-size: 22px;
   font-weight: 700;
   margin: 0;
-  color: #17323c;
+  color: var(--ink);
 }
 
 .topbar-info {
   display: flex;
   align-items: center;
   gap: 20px;
-  color: #60777e;
+  color: #756a76;
   font-size: 11px;
 }
 
@@ -154,7 +154,7 @@
 }
 
 .welcome-section {
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 35px;
@@ -162,7 +162,7 @@
 }
 
 .eyebrow {
-  color: var(--teal);
+  color: var(--plum-soft);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 1.2px;
@@ -172,11 +172,11 @@
   font-family: 'Manrope', sans-serif;
   font-size: 27px;
   margin: 13px 0 10px;
-  color: #17323c;
+  color: var(--ink);
 }
 
 .welcome-section p {
-  color: #71858b;
+  color: var(--muted);
   font-size: 13px;
   line-height: 1.8;
   max-width: 550px;

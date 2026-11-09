@@ -1,6 +1,17 @@
+<<<<<<< Updated upstream
 Python
 
 .venv/ venv/ pycache/ *.py[cod] *.pyc .pytest_cache/
+=======
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.pyc
+.pytest_cache/
+venv/
+>>>>>>> Stashed changes
 
 *.db
 
