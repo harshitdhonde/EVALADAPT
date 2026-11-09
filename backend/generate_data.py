@@ -65,7 +65,7 @@ def build_observations(z, rng):
                          + m.month - INTERVENTION_DATE.month)
                 decay = 1 - 0.015 * since   # slight ageing/dust deterioration
                 effect = -zr.expected_reduction_c * zr._efficiency * decay
-            temp = zr.baseline_temp_c + seasonal + trend + effect + rng.normal(0, 0.35)
+            temp = zr.baseline_temp_c + seasonal + trend + effect + rng.normal(0, 0.12)
             rows.append({
                 "zone_id": zr.zone_id, "zone_name": zr.zone_name,
                 "group": zr.group, "month": m, "temp_c": round(temp, 2),
