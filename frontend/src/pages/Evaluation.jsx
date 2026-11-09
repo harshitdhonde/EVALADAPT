@@ -1,13 +1,10 @@
+import { useEffect, useState } from "react";
 import Plot from "react-plotly.js";
 import {
   ChartNoAxesCombined, TrendingDown, Target,
   Activity, Info, ArrowDownRight
 } from "lucide-react";
-
-const treated = [34.2, 32.8];
-const control = [34.0, 33.5];
-
-const did = (treated[1] - treated[0]) - (control[1] - control[0]);
+import { getEvaluation } from "../services/api";
 
 const chartLayout = {
   autosize: true,
@@ -15,15 +12,10 @@ const chartLayout = {
   plot_bgcolor: "rgba(0,0,0,0)",
   font: { color: "#c3d4d6", family: "DM Sans" },
   margin: { t: 25, r: 20, b: 55, l: 55 },
-  xaxis: {
-    gridcolor: "#263e45",
-    linecolor: "#40565c",
-    zerolinecolor: "#40565c"
-  },
+  xaxis: { gridcolor: "#263e45", linecolor: "#40565c" },
   yaxis: {
     gridcolor: "#263e45",
     linecolor: "#40565c",
-    zerolinecolor: "#40565c",
     title: "Temperature (°C)"
   },
   legend: { orientation: "h", y: -0.25 },
@@ -32,7 +24,49 @@ const chartLayout = {
 
 const config = { responsive: true, displaylogo: false };
 
+function average(values) {
+  if (!values.length) return null;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function formatTemp(value) {
+  return Number.isFinite(Number(value)) ? `${Number(value).toFixed(3)}°C` : "—";
+}
+
 export default function Evaluation() {
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    getEvaluation()
+      .then(response => setResult(response.data))
+      .catch(() => setError("Unable to load evaluation results. Check that the backend is running."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div className="module-page"><p>Loading evaluation results...</p></div>;
+  if (error) return <div className="module-page"><p>{error}</p></div>;
+
+  const impact = result?.impact || {};
+  const temporal = result?.temporal || {};
+  const series = temporal.series || [];
+
+  const expected = impact.expected_reduction_c;
+  const observed = impact.observed_raw_reduction_c;
+  const estimated = impact.estimated_reduction_c;
+  const effectiveness = impact.effectiveness_pct;
+  const pValue = impact.p_value;
+  const confidence = impact.ci_95_c || [];
+
+  const pre = series.filter(item => item.month < "2025-01");
+  const post = series.filter(item => item.month >= "2025-01");
+
+  const treatedBefore = average(pre.map(item => item.treated_mean_c));
+  const treatedAfter = average(post.map(item => item.treated_mean_c));
+  const controlBefore = average(pre.map(item => item.control_mean_c));
+  const controlAfter = average(post.map(item => item.control_mean_c));
+
   return (
     <div className="module-page">
       <section className="module-hero">
@@ -47,8 +81,8 @@ export default function Evaluation() {
       <div className="evaluation-notice">
         <Info size={19} />
         <span>
-          SIMULATED PROTOTYPE RESULTS — All figures are illustrative and are
-          not actual temperature measurements from Pune.
+          SYNTHETIC DEMONSTRATION DATA — These results are illustrative
+          and are not actual temperature measurements from Pune.
         </span>
       </div>
 
@@ -56,29 +90,29 @@ export default function Evaluation() {
         <div className="evaluation-kpi">
           <div className="kpi-icon"><Target size={23} /></div>
           <span>Expected Reduction</span>
-          <strong>2.0°C</strong>
+          <strong>{formatTemp(expected)}</strong>
           <small>Program target</small>
         </div>
 
         <div className="evaluation-kpi">
           <div className="kpi-icon"><TrendingDown size={23} /></div>
-          <span>Observed Reduction</span>
-          <strong className="green-value">1.4°C</strong>
-          <small>Illustrative treated-zone change</small>
+          <span>Observed Raw Reduction</span>
+          <strong className="green-value">{formatTemp(observed)}</strong>
+          <small>Raw treated-zone change</small>
         </div>
 
         <div className="evaluation-kpi">
           <div className="kpi-icon"><Activity size={23} /></div>
-          <span>Control Group Reduction</span>
-          <strong>0.5°C</strong>
-          <small>Illustrative comparison change</small>
+          <span>Estimated DiD Reduction</span>
+          <strong className="green-value">{formatTemp(estimated)}</strong>
+          <small>Adjusted for control-group change</small>
         </div>
 
         <div className="evaluation-kpi">
           <div className="kpi-icon"><ChartNoAxesCombined size={23} /></div>
-          <span>DiD Estimate</span>
-          <strong className="green-value">{Math.abs(did).toFixed(1)}°C</strong>
-          <small>Additional estimated reduction</small>
+          <span>Effectiveness</span>
+          <strong>{Number(effectiveness).toFixed(1)}%</strong>
+          <small>{impact.status?.replaceAll("_", " ") || "Evaluation result"}</small>
         </div>
       </section>
 
@@ -88,34 +122,28 @@ export default function Evaluation() {
             <div className="eyebrow">TARGET VS PERFORMANCE</div>
             <h2>Expected vs Observed Impact</h2>
             <p className="panel-description">
-              Comparison of the program target and observed temperature reduction.
+              Comparison of the expected target, raw observed change and estimated intervention effect.
             </p>
           </div>
         </div>
 
         <div className="evaluation-chart">
           <Plot
-            data={[
-              {
-                x: ["Expected Target", "Observed Reduction"],
-                y: [2.0, 1.4],
-                type: "bar",
-                marker: { color: ["#247d79", "#10a981"] },
-                text: ["2.0°C", "1.4°C"],
-                textposition: "outside",
-                textfont: { color: "#f0f6f5", size: 15 },
-                hovertemplate: "%{x}: %{y}°C<extra></extra>"
-              }
-            ]}
+            data={[{
+              x: ["Expected Target", "Raw Observed", "Estimated DiD"],
+              y: [expected, observed, estimated],
+              type: "bar",
+              marker: { color: ["#247d79", "#5ba9dc", "#10a981"] },
+              text: [expected, observed, estimated].map(value => `${Number(value).toFixed(3)}°C`),
+              textposition: "outside",
+              textfont: { color: "#f0f6f5", size: 14 },
+              hovertemplate: "%{x}: %{y:.3f}°C<extra></extra>"
+            }]}
             layout={{
               ...chartLayout,
               height: 350,
               showlegend: false,
-              yaxis: {
-                ...chartLayout.yaxis,
-                range: [0, 2.6],
-                dtick: 0.5
-              },
+              yaxis: { ...chartLayout.yaxis, rangemode: "tozero" },
               margin: { t: 40, r: 30, b: 60, l: 60 }
             }}
             config={config}
@@ -127,10 +155,14 @@ export default function Evaluation() {
         <div className="evaluation-insight">
           <ArrowDownRight size={22} />
           <div>
-            <strong>0.6°C below the expected target</strong>
+            <strong>
+              {Number.isFinite(Number(expected)) && Number.isFinite(Number(estimated))
+                ? `${(expected - estimated).toFixed(3)}°C below the expected target`
+                : "Evaluation comparison"}
+            </strong>
             <span>
-              The illustrative observed reduction is lower than the
-              program's target. Further investigation is needed.
+              The estimated effect is compared with the program target.
+              The result helps identify where further adaptation may be needed.
             </span>
           </div>
         </div>
@@ -142,7 +174,7 @@ export default function Evaluation() {
             <div className="eyebrow">COMPARATIVE EVALUATION</div>
             <h2>Before & After Analysis</h2>
             <p className="panel-description">
-              Compare temperature changes in treated and control groups.
+              Monthly average temperatures in treated and control zones.
             </p>
           </div>
         </div>
@@ -151,30 +183,30 @@ export default function Evaluation() {
           <Plot
             data={[
               {
-                x: ["Before Intervention", "After Intervention"],
-                y: treated,
+                x: series.map(item => item.month),
+                y: series.map(item => item.treated_mean_c),
                 type: "scatter",
                 mode: "lines+markers",
                 name: "Treated Zones",
-                line: { color: "#10b98c", width: 4 },
-                marker: { size: 11 }
+                line: { color: "#10b98c", width: 3 },
+                marker: { size: 7 }
               },
               {
-                x: ["Before Intervention", "After Intervention"],
-                y: control,
+                x: series.map(item => item.month),
+                y: series.map(item => item.control_mean_c),
                 type: "scatter",
                 mode: "lines+markers",
                 name: "Control Zones",
-                line: { color: "#5ba9dc", width: 4 },
-                marker: { size: 11 }
+                line: { color: "#5ba9dc", width: 3 },
+                marker: { size: 7 }
               }
             ]}
             layout={{
               ...chartLayout,
               height: 370,
-              yaxis: {
-                ...chartLayout.yaxis,
-                range: [31.5, 35]
+              xaxis: {
+                ...chartLayout.xaxis,
+                tickangle: -35
               }
             }}
             config={config}
@@ -185,14 +217,24 @@ export default function Evaluation() {
 
         <div className="comparison-grid">
           <div>
-            <span>Treated Group</span>
-            <strong>34.2°C → 32.8°C</strong>
-            <small>Reduction: 1.4°C</small>
+            <span>Treated Group — Before</span>
+            <strong>{formatTemp(treatedBefore)}</strong>
+            <small>Average monthly temperature</small>
           </div>
           <div>
-            <span>Control Group</span>
-            <strong>34.0°C → 33.5°C</strong>
-            <small>Reduction: 0.5°C</small>
+            <span>Treated Group — After</span>
+            <strong>{formatTemp(treatedAfter)}</strong>
+            <small>Average monthly temperature</small>
+          </div>
+          <div>
+            <span>Control Group — Before</span>
+            <strong>{formatTemp(controlBefore)}</strong>
+            <small>Average monthly temperature</small>
+          </div>
+          <div>
+            <span>Control Group — After</span>
+            <strong>{formatTemp(controlAfter)}</strong>
+            <small>Average monthly temperature</small>
           </div>
         </div>
       </section>
@@ -203,38 +245,42 @@ export default function Evaluation() {
             <div className="eyebrow">CAUSAL EFFECT ESTIMATION</div>
             <h2>Difference-in-Differences Analysis</h2>
             <p className="panel-description">
-              Estimate the additional change associated with the intervention
-              by accounting for the change in the control group.
+              Estimate the additional temperature reduction associated with
+              the intervention by accounting for control-group changes.
             </p>
           </div>
-          <span className="sample-badge">ILLUSTRATIVE</span>
+          <span className="sample-badge">SYNTHETIC RESULTS</span>
         </div>
 
         <div className="did-formula">
           <div>
-            <span>Treated Group Change</span>
-            <strong>−1.4°C</strong>
+            <span>Raw Observed Reduction</span>
+            <strong>{formatTemp(observed)}</strong>
           </div>
-          <span className="formula-minus">−</span>
+          <span className="formula-minus">→</span>
           <div>
-            <span>Control Group Change</span>
-            <strong>−0.5°C</strong>
+            <span>Adjusted DiD Estimate</span>
+            <strong>{formatTemp(estimated)}</strong>
           </div>
-          <span className="formula-equal">=</span>
+          <span className="formula-equal">±</span>
           <div className="did-result">
-            <span>DiD Estimate</span>
-            <strong>−0.9°C</strong>
+            <span>95% Confidence Interval</span>
+            <strong>
+              {confidence.length === 2
+                ? `${Number(confidence[0]).toFixed(3)}–${Number(confidence[1]).toFixed(3)}°C`
+                : "—"}
+            </strong>
           </div>
         </div>
 
         <div className="did-explanation">
           <Info size={20} />
           <p>
-            The illustrative estimate suggests an additional 0.9°C reduction
-            in treated zones relative to control zones. Interpreting this as
-            a causal effect requires a valid evaluation design, including
-            appropriate parallel-trends assumptions and consideration of
-            confounding factors.
+            Estimated reduction: {formatTemp(estimated)}.
+            Statistical p-value: {Number.isFinite(Number(pValue)) ? Number(pValue).toFixed(4) : "—"}.
+            Parallel-trends assessment: {impact.parallel_trends?.supported ? "supported by the available pre-intervention test" : "not established"}.
+            A causal interpretation still depends on the validity of the evaluation design
+            and its assumptions. These synthetic results do not prove causality.
           </p>
         </div>
       </section>

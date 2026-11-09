@@ -1,18 +1,16 @@
 import Plot from "react-plotly.js";
 import { useEffect, useState } from "react";
-import { getHealth } from "../services/api";
+import {
+  getHealth,
+  getOverview,
+  getImpactEquity,
+  getDecision
+} from "../services/api";
+
 import {
   Thermometer, Target, ShieldCheck, BrainCircuit,
   Info, ArrowRight
 } from "lucide-react";
-
-const wards = [
-  { name: "Aundh Ward", value: 1.65 },
-  { name: "Baner Ward", value: 1.50 },
-  { name: "Kothrud Ward", value: 1.40 },
-  { name: "Hadapsar Ward", value: 1.25 },
-  { name: "Pimpri Ward", value: 1.10 }
-];
 
 const chartLayout = {
   autosize: true,
@@ -40,20 +38,37 @@ function KpiCard({ icon: Icon, label, value, description, color }) {
 
 export default function Overview() {
   const [backendStatus, setBackendStatus] = useState("checking");
+  const [overview, setOverview] = useState(null);
+  const [impactEquity, setImpactEquity] = useState(null);
+  const [decision, setDecision] = useState(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     let active = true;
 
-    getHealth()
-      .then((response) => {
-        if (active) {
-          setBackendStatus(
-            response.data?.status === "ok" ? "connected" : "disconnected"
-          );
-        }
+    Promise.all([
+      getHealth(),
+      getOverview(),
+      getImpactEquity(),
+      getDecision()
+    ])
+      .then(([healthRes, overviewRes, equityRes, decisionRes]) => {
+        if (!active) return;
+
+        setBackendStatus(
+          healthRes.data?.status === "ok" ? "connected" : "disconnected"
+        );
+        setOverview(overviewRes.data);
+        setImpactEquity(equityRes.data);
+        setDecision(decisionRes.data);
       })
-      .catch(() => {
-        if (active) setBackendStatus("disconnected");
+      .catch((err) => {
+        if (!active) return;
+        setBackendStatus("disconnected");
+        setError(
+          err.response?.data?.detail ||
+          "Unable to load dashboard data. Check whether the backend is running."
+        );
       });
 
     return () => {
@@ -73,6 +88,44 @@ export default function Overview() {
     disconnected: "Backend disconnected"
   };
 
+  if (error) {
+    return (
+      <div className="dashboard">
+        <section className="hero-section">
+          <div className="eyebrow">CLIMATE ADAPTATION MONITORING</div>
+          <h1>Evaluate. Understand. Adapt.</h1>
+          <p className="hero-description">{error}</p>
+        </section>
+        <div className="synthetic-notice">
+          <Info size={23} />
+          <div>
+            <strong>BACKEND CONNECTION REQUIRED</strong>
+            <p>Start the FastAPI backend and refresh this page.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!overview || !impactEquity || !decision) {
+    return (
+      <div className="dashboard">
+        <section className="hero-section">
+          <div className="eyebrow">CLIMATE ADAPTATION MONITORING</div>
+          <h1>Evaluate. Understand. Adapt.</h1>
+          <p className="hero-description">Loading evaluation results...</p>
+        </section>
+      </div>
+    );
+  }
+
+  const kpis = overview.kpis;
+  const zones = [...(impactEquity.zone_effects || [])]
+    .sort((a, b) => b.effectiveness_pct - a.effectiveness_pct)
+    .slice(0, 5);
+
+  const status = kpis.impact_status?.replaceAll("_", " ") || "UNDER REVIEW";
+
   return (
     <div className="dashboard">
       <section className="hero-section">
@@ -89,9 +142,9 @@ export default function Overview() {
         <div>
           <strong>SYNTHETIC ILLUSTRATIVE DATA</strong>
           <p>
-            The figures presented in this dashboard are simulated prototype
-            values for algorithmic demonstration and model validation,
-            not field telemetry measurements from Pune municipal stations.
+            {overview.data_notice}
+            {" "}These values demonstrate the evaluation workflow and are not
+            actual Pune field measurements.
           </p>
         </div>
       </div>
@@ -126,39 +179,42 @@ export default function Overview() {
         <KpiCard
           icon={Thermometer}
           label="Expected Temp Reduction"
-          value={<>2.0<small>°C</small></>}
-          description="Baseline Target Model (Simulated)"
+          value={<>{Number(kpis.expected_reduction_c).toFixed(3)}<small>°C</small></>}
+          description="Modelled intervention target"
           color="teal"
         />
+
         <KpiCard
           icon={Thermometer}
-          label="Observed Temp Reduction"
-          value={<>1.4<small>°C</small></>}
-          description="-0.6°C Variance (Illustrative)"
+          label="Estimated Temp Reduction"
+          value={<>{Number(kpis.estimated_reduction_c).toFixed(3)}<small>°C</small></>}
+          description="Difference-in-Differences estimate"
           color="green"
         />
+
         <KpiCard
           icon={Target}
-          label="Intervention Coverage"
-          value={<>68<small>%</small></>}
-          description="Target Municipal Roof Areas"
+          label="Effectiveness"
+          value={<>{Number(kpis.effectiveness_pct).toFixed(1)}<small>%</small></>}
+          description="Estimated impact vs expected target"
           color="blue"
         />
+
         <KpiCard
           icon={ShieldCheck}
           label="Evaluation Status"
-          value="Under Review"
-          description="In Progress — QA"
+          value={status}
+          description={`Programme decision: ${overview.decision}`}
           color="purple"
         />
       </section>
 
       <section className="charts-grid">
         <div className="panel chart-panel">
-          <div className="eyebrow">COMPARATIVE TELEMETRY</div>
+          <div className="eyebrow">COMPARATIVE EVALUATION</div>
           <h2>Expected vs Observed Impact</h2>
           <p className="panel-description">
-            Comparison of simulated baseline cooling target against estimated observed reduction.
+            Modelled target compared with raw and estimated temperature reduction.
           </p>
 
           <div className="chart-container">
@@ -166,45 +222,43 @@ export default function Overview() {
               data={[
                 {
                   type: "bar",
-                  x: ["Expected", "Observed"],
-                  y: [2.0, 1.4],
-                  marker: { color: ["#159b7d", "#2878aa"] },
-                  text: ["2.0°C", "1.4°C"],
+                  x: ["Expected", "Raw Observed", "Estimated"],
+                  y: [
+                    kpis.expected_reduction_c,
+                    kpis.observed_raw_reduction_c,
+                    kpis.estimated_reduction_c
+                  ],
+                  marker: { color: ["#159b7d", "#2878aa", "#39c98a"] },
+                  text: [
+                    `${Number(kpis.expected_reduction_c).toFixed(3)}°C`,
+                    `${Number(kpis.observed_raw_reduction_c).toFixed(3)}°C`,
+                    `${Number(kpis.estimated_reduction_c).toFixed(3)}°C`
+                  ],
                   textposition: "outside",
-                  textfont: { color: "#ffffff", size: 15 },
-                  hovertemplate: "%{x}: %{y}°C<extra></extra>"
+                  textfont: { color: "#ffffff", size: 13 },
+                  hovertemplate: "%{x}: %{y:.3f}°C<extra></extra>"
                 }
               ]}
               layout={{
                 ...chartLayout,
                 height: 285,
-                bargap: 0.25,
+                bargap: 0.3,
                 xaxis: {
                   color: "#d5e4e5",
                   gridcolor: "#263e45",
                   linecolor: "#29434a",
-                  tickfont: { size: 13 }
+                  tickfont: { size: 12 }
                 },
                 yaxis: {
-                  title: { text: "Temperature Reduction (°C)", font: { size: 12 } },
-                  range: [0, 2.5],
-                  dtick: 0.5,
+                  title: {
+                    text: "Temperature Reduction (°C)",
+                    font: { size: 12 }
+                  },
+                  rangemode: "tozero",
                   color: "#b8cbce",
                   gridcolor: "#294047",
                   zerolinecolor: "#40555b"
-                },
-                annotations: [
-                  {
-                    x: "Observed",
-                    y: 2.18,
-                    text: "-0.6°C<br>Deficit",
-                    showarrow: true,
-                    arrowhead: 2,
-                    ax: 0,
-                    ay: 35,
-                    font: { color: "#ff6969", size: 13 }
-                  }
-                ]
+                }
               }}
               config={{ displayModeBar: false, responsive: true }}
               useResizeHandler
@@ -213,8 +267,8 @@ export default function Overview() {
           </div>
 
           <div className="chart-footer">
-            <span>Simulation Index: P-HEAT-04</span>
-            <span>Illustrative confidence indicator: 94.2%</span>
+            <span>Run ID: {overview.run_id}</span>
+            <span>p-value: {Number(kpis.p_value).toFixed(4)}</span>
           </div>
         </div>
 
@@ -222,29 +276,31 @@ export default function Overview() {
           <div className="eyebrow">SPATIAL VARIANCE</div>
           <h2>Zone-wise Performance</h2>
           <p className="panel-description">
-            Simulated microclimate cooling delta across targeted Pune municipal administrative wards.
+            Top five treated zones ranked by estimated intervention effectiveness.
           </p>
 
           <div className="ward-list">
-            {wards.map((ward) => (
-              <div className="ward-item" key={ward.name}>
+            {zones.map((zone) => (
+              <div className="ward-item" key={zone.zone_id}>
                 <div className="ward-heading">
-                  <span>{ward.name}</span>
-                  <strong>{ward.value.toFixed(2)}°C</strong>
+                  <span>{zone.zone_name}</span>
+                  <strong>{Number(zone.effectiveness_pct).toFixed(1)}%</strong>
                 </div>
                 <div className="ward-track">
                   <div
                     className="ward-fill"
-                    style={{ width: `${(ward.value / 2) * 100}%` }}
+                    style={{
+                      width: `${Math.min(Math.max(zone.effectiveness_pct, 0), 100)}%`
+                    }}
                   />
                 </div>
               </div>
             ))}
           </div>
           <div className="ward-axis">
-            <span>0.0°C (Min)</span>
-            <span>1.0°C</span>
-            <span>2.0°C (Baseline Goal)</span>
+            <span>0% (Min)</span>
+            <span>50%</span>
+            <span>100% (Target)</span>
           </div>
         </div>
       </section>
@@ -257,23 +313,23 @@ export default function Overview() {
           <div className="diagnosis-top">
             <div>
               <div className="eyebrow">AI DIAGNOSTIC ENGINE</div>
-              <h2>Observed impact is below the expected target.</h2>
+              <h2>
+                {decision.decision === "MODIFY"
+                  ? "The programme needs targeted improvements."
+                  : `Current programme decision: ${decision.decision}.`}
+              </h2>
             </div>
-            <span className="sample-badge">SAMPLE INSIGHT</span>
+            <span className="sample-badge">AI-ASSISTED INSIGHT</span>
           </div>
 
-          <p>
-            The illustrative figures indicate a gap between expected (2.0°C)
-            and observed (1.4°C) reduction. Intervention coverage (68%) and
-            zone-level microclimate variation (Aundh at 1.65°C vs Pimpri at
-            1.10°C) are potential contributing factors to investigate.
-          </p>
+          <p>{decision.rationale}</p>
 
           <div className="diagnosis-notice">
             <Info size={17} />
             <span>
               AI diagnosis identifies statistical associations, spatial patterns,
-              and potential systemic drivers; it does not establish deterministic causal proof.
+              and potential systemic drivers. It does not establish causal proof.
+              All displayed results use synthetic demonstration data.
             </span>
           </div>
 
