@@ -2,8 +2,6 @@ Python
 
 .venv/ venv/ pycache/ *.py[cod] *.pyc .pytest_cache/
 
-Database
-
 *.db
 
 Node
