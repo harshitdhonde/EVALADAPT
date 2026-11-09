@@ -26,9 +26,9 @@ def temporal_evaluation(df):
     quarterly = [{"quarter": k, "mean_cooling_c": r(np.mean(v))} for k, v in quarters.items()]
 
     lr = stats.linregress(np.arange(len(post)), post.values)
-    if lr.pvalue < 0.10 and lr.slope < 0:
+    if lr.pvalue < 0.05 and lr.slope < 0:
         trend = "DETERIORATING"
-    elif lr.pvalue < 0.10 and lr.slope > 0:
+    elif lr.pvalue < 0.05 and lr.slope > 0:
         trend = "IMPROVING"
     else:
         trend = "STABLE"
@@ -39,5 +39,7 @@ def temporal_evaluation(df):
         "trend": trend,
         "slope_c_per_month": r(lr.slope, 4),
         "p_value": r(lr.pvalue, 4),
-        "note": "Adjusted cooling = change in treated-minus-control gap vs the pre-programme average gap.",
+                "note": "Adjusted cooling = change in treated-minus-control gap vs the pre-programme average gap. "
+                "Trend uses only the post-programme months, so statistical power is limited; "
+                "STABLE means no significant trend detected, not proof of no change.",
     }
