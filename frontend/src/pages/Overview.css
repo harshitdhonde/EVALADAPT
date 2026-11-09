@@ -2,7 +2,7 @@
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
-  color: #17343b;
+  color: #372b37;
 }
 
 .location-strip {
@@ -12,7 +12,7 @@
   gap: 10px;
   margin-bottom: 30px;
   font-size: 11px;
-  color: #60777a;
+  color: #6e6470;
 }
 
 .location-strip span {
@@ -22,8 +22,8 @@
 }
 
 .case-tag {
-  background: #e8f2ef;
-  color: #167665;
+  background: #f2e7ee;
+  color: #5b4657;
   padding: 5px 9px;
   border-radius: 5px;
 }
@@ -34,7 +34,7 @@
 
 .eyebrow {
   display: block;
-  color: #087f6b;
+  color: #785b76;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 1.1px;
@@ -46,13 +46,13 @@
   font-size: clamp(27px, 3vw, 39px);
   line-height: 1.2;
   letter-spacing: -1.4px;
-  color: #102c36;
+  color: #372b37;
   margin: 0 0 10px;
 }
 
 .overview-intro p,
 .panel-heading p {
-  color: #718186;
+  color: #6e6470;
   font-size: 13px;
   line-height: 1.7;
   max-width: 720px;
@@ -64,9 +64,9 @@
   gap: 12px;
   padding: 15px;
   margin-bottom: 20px;
-  background: #fff9e9;
-  border: 1px solid #f1e8cb;
-  color: #a13c20;
+  background: #f8f1f4;
+  border: 1px solid #d9c7d5;
+  color: #5b4657;
   font-size: 12px;
 }
 
@@ -81,7 +81,7 @@
 }
 
 .synthetic-notice p {
-  color: #936044;
+  color: #6c5d6c;
   line-height: 1.6;
   margin: 5px 0 0;
 }
@@ -95,7 +95,7 @@
 
 .metric-card {
   background: white;
-  border: 1px solid #e7eded;
+  border: 1px solid var(--border);
   padding: 18px;
   min-height: 115px;
 }
@@ -103,12 +103,12 @@
 .metric-label {
   display: block;
   font-size: 11px;
-  color: #617176;
+  color: #6e6470;
   margin-bottom: 9px;
 }
 
 .metric-value {
-  color: #102c36;
+  color: #372b37;
   font-family: "Manrope", sans-serif;
   font-size: 29px;
   font-weight: 750;
@@ -123,7 +123,7 @@
 }
 
 .metric-value.teal-text {
-  color: #087f6b;
+  color: #785b76;
 }
 
 .metric-card:last-child .metric-value {
@@ -135,20 +135,20 @@
 .metric-note {
   display: block;
   margin-top: 5px;
-  color: #819095;
+  color: #817780;
   font-size: 10px;
 }
 
 .dashboard-panel {
   background: white;
-  border: 1px solid #e7eded;
+  border: 1px solid var(--border);
   padding: 20px;
   margin-bottom: 18px;
 }
 
 .panel-heading h2,
 .diagnosis-panel h2 {
-  color: #102c36;
+  color: #372b37;
   font-family: "Manrope", sans-serif;
   font-size: 19px;
   letter-spacing: -.5px;
@@ -161,7 +161,7 @@
 
 .chart-container {
   margin-top: 15px;
-  background: #f5f7f6;
+  background: #f9f4f1;
   min-width: 0;
 }
 
@@ -172,8 +172,8 @@
   gap: 8px;
   padding-top: 12px;
   margin-top: 10px;
-  border-top: 1px solid #edf0ef;
-  color: #879397;
+  border-top: 1px solid var(--border);
+  color: #817780;
   font-size: 10px;
 }
 
@@ -195,41 +195,41 @@
 
 .zone-label strong {
   font-weight: 600;
-  color: #29464b;
+  color: #5b4758;
 }
 
 .zone-label span {
-  color: #087f6b;
+  color: #785b76;
   font-weight: 700;
 }
 
 .zone-track {
   width: 100%;
   height: 9px;
-  background: #e8eeee;
+  background: #efe3eb;
   overflow: hidden;
 }
 
 .zone-fill {
   height: 100%;
-  background: #087f6b;
+  background: #785b76;
 }
 
 .zone-scale {
   display: flex;
   justify-content: space-between;
-  color: #8b999b;
+  color: #817780;
   font-size: 9px;
   margin-top: 20px;
 }
 
 .diagnosis-panel {
   background: white;
-  border: 1px solid #e3eae8;
-  border-top: 3px solid #087f6b;
+  border: 1px solid var(--border);
+  border-top: 3px solid #785b76;
   padding: 21px;
   margin-bottom: 25px;
-  box-shadow: 0 3px 12px rgba(16, 44, 54, .04);
+  box-shadow: 0 3px 12px rgba(67, 43, 67, .04);
 }
 
 .diagnosis-topline {
@@ -247,12 +247,12 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  color: #173d43;
+  color: #5b4657;
 }
 
 .sample-label {
-  background: #d9f3ed;
-  color: #087f6b;
+  background: #f2e7ee;
+  color: #5b4657;
   padding: 5px 8px;
   font-size: 9px;
 }
@@ -263,7 +263,7 @@
 }
 
 .diagnosis-panel > p {
-  color: #65777b;
+  color: #6e6470;
   font-size: 12px;
   line-height: 1.75;
   margin: 0 0 15px;
@@ -273,9 +273,9 @@
   display: flex;
   align-items: flex-start;
   gap: 9px;
-  background: #f3f6f5;
+  background: #f8f1f4;
   padding: 12px;
-  color: #647477;
+  color: #6e6470;
   font-size: 10px;
   line-height: 1.6;
   margin-bottom: 13px;
@@ -292,7 +292,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 12px 15px;
-  background: #102c36;
+  background: #785b76;
   color: white;
   border: 0;
   font-family: inherit;
@@ -303,13 +303,13 @@
 }
 
 .diagnosis-button:hover {
-  background: #087f6b;
+  background: #614660;
 }
 
 .overview-footer {
   text-align: center;
   padding: 12px 10px 25px;
-  color: #819094;
+  color: #817780;
 }
 
 .footer-brand {
@@ -317,12 +317,12 @@
   justify-content: center;
   align-items: center;
   gap: 7px;
-  color: #173b42;
+  color: #5b4657;
   font-size: 13px;
 }
 
 .footer-brand svg {
-  color: #087f6b;
+  color: #785b76;
 }
 
 .overview-footer p {

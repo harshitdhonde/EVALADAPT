@@ -2,24 +2,56 @@
 
 :root {
   font-family: 'DM Sans', sans-serif;
-  color: #edf5f5;
-  background: #07171d;
+  color: #372b37;
+  background: #f5eee5;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-size: 16px;
+  --plum: #432b43;
+  --plum-soft: #785b76;
+  --ink: #372b37;
+  --milk: #eee3d7;
+  --milk-light: #f6f0e8;
+  --background: #f5eee5;
+  --surface: #fffdf9;
+  --border: #e9dfd6;
+  --muted: #817780;
+  --shadow: rgba(67, 43, 67, 0.12);
 }
 
 * { box-sizing: border-box; }
+
+html {
+  min-width: 320px;
+  scroll-behavior: smooth;
+}
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background: var(--background);
+  color: var(--ink);
   font-size: 16px;
   line-height: 1.55;
 }
 
-button { font: inherit; }
-a { color: inherit; text-decoration: none; }
+button, input, select {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid #a783a0;
+  outline-offset: 3px;
+}
+
+#root {
+  min-height: 100vh;
+}

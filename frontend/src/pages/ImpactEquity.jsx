@@ -9,10 +9,10 @@ const chartLayout = {
   autosize: true,
   paper_bgcolor: "rgba(0,0,0,0)",
   plot_bgcolor: "rgba(0,0,0,0)",
-  font: { color: "#c3d4d6", family: "DM Sans" },
+  font: { color: "#5b4657", family: "DM Sans" },
   margin: { t: 25, r: 25, b: 55, l: 65 },
-  xaxis: { gridcolor: "#263e45", linecolor: "#40565c" },
-  yaxis: { gridcolor: "#263e45", linecolor: "#40565c" }
+  xaxis: { gridcolor: "#e9dfd6", linecolor: "#d9c7d5" },
+  yaxis: { gridcolor: "#e9dfd6", linecolor: "#d9c7d5" }
 };
 
 const config = { responsive: true, displaylogo: false };
@@ -46,8 +46,8 @@ export default function ImpactEquity() {
 
   const zoneColor = zone =>
     String(zone.vulnerability_group).toLowerCase() === "high"
-      ? "#d49a43"
-      : "#10a981";
+      ? "#a57d9a"
+      : "#785b76";
 
   const sortedZones = [...zones].sort(
     (a, b) => a.effectiveness_pct - b.effectiveness_pct
@@ -121,7 +121,7 @@ export default function ImpactEquity() {
               x: ["High Vulnerability", "Low Vulnerability"],
               y: [highAverage, lowAverage],
               type: "bar",
-              marker: { color: ["#d49a43", "#10a981"] },
+              marker: { color: ["#a57d9a", "#785b76"] },
               text: [`${highAverage.toFixed(3)}°C`, `${lowAverage.toFixed(3)}°C`],
               textposition: "outside",
               textfont: { color: "#f0f6f5", size: 15 },

@@ -10,12 +10,12 @@ const chartLayout = {
   autosize: true,
   paper_bgcolor: "rgba(0,0,0,0)",
   plot_bgcolor: "rgba(0,0,0,0)",
-  font: { color: "#c3d4d6", family: "DM Sans" },
+  font: { color: "#5b4657", family: "DM Sans" },
   margin: { t: 25, r: 20, b: 55, l: 55 },
-  xaxis: { gridcolor: "#263e45", linecolor: "#40565c" },
+  xaxis: { gridcolor: "#e9dfd6", linecolor: "#d9c7d5" },
   yaxis: {
-    gridcolor: "#263e45",
-    linecolor: "#40565c",
+    gridcolor: "#e9dfd6",
+    linecolor: "#d9c7d5",
     title: "Temperature (°C)"
   },
   legend: { orientation: "h", y: -0.25 },
@@ -133,7 +133,7 @@ export default function Evaluation() {
               x: ["Expected Target", "Raw Observed", "Estimated DiD"],
               y: [expected, observed, estimated],
               type: "bar",
-              marker: { color: ["#247d79", "#5ba9dc", "#10a981"] },
+              marker: { color: ["#432b43", "#785b76", "#a57d9a"] },
               text: [expected, observed, estimated].map(value => `${Number(value).toFixed(3)}°C`),
               textposition: "outside",
               textfont: { color: "#f0f6f5", size: 14 },
@@ -188,7 +188,7 @@ export default function Evaluation() {
                 type: "scatter",
                 mode: "lines+markers",
                 name: "Treated Zones",
-                line: { color: "#10b98c", width: 3 },
+                line: { color: "#785b76", width: 3 },
                 marker: { size: 7 }
               },
               {
@@ -197,7 +197,7 @@ export default function Evaluation() {
                 type: "scatter",
                 mode: "lines+markers",
                 name: "Control Zones",
-                line: { color: "#5ba9dc", width: 3 },
+                line: { color: "#a57d9a", width: 3 },
                 marker: { size: 7 }
               }
             ]}
