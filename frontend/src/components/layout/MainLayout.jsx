@@ -1,46 +1,39 @@
-import { Outlet, useLocation } from 'react-router-dom'
-import { MapPin, CalendarDays } from 'lucide-react'
-import Sidebar from './Sidebar'
+import { Outlet, useLocation } from "react-router-dom";
+import { MapPin, CalendarDays } from "lucide-react";
+import Sidebar from "./Sidebar";
 
-const pageTitles = {
-  '/': 'Overview Dashboard',
-  '/interventions': 'Interventions & Data',
-  '/evaluation': 'Impact Evaluation',
-  '/equity': 'Impact & Equity',
-  '/diagnosis': 'AI-Assisted Diagnosis',
-  '/reports': 'Reports & Decisions',
-}
+const titles = {
+  "/": "Dashboard",
+  "/interventions": "Interventions & Data",
+  "/evaluation": "Impact Evaluation",
+  "/equity": "Impact & Equity",
+  "/diagnosis": "AI Diagnosis",
+  "/reports": "Reports & Decisions"
+};
 
-function MainLayout() {
-  const location = useLocation()
-  const title = pageTitles[location.pathname] || 'EVALADAPT'
+export default function MainLayout() {
+  const location = useLocation();
 
   return (
-    <div className="app-layout">
+    <div className="app-shell">
       <Sidebar />
-      <main className="main-area">
+      <div className="main-area">
         <header className="topbar">
-          <div>
-            <p className="breadcrumb">EVALADAPT / WORKSPACE</p>
-            <h1>{title}</h1>
+          <div className="breadcrumb">
+            <span>{titles[location.pathname] || "Workspace"}</span>
+            <span className="breadcrumb-divider">/</span>
+            <strong>{location.pathname === "/" ? "Dashboard" : "Workspace"}</strong>
           </div>
-          <div className="topbar-info">
-            <div className="location-info">
-              <MapPin size={16} />
-              <span>Pune, Maharashtra</span>
-            </div>
-            <div className="project-info">
-              <CalendarDays size={16} />
-              <span>Urban Heat Adaptation</span>
-            </div>
+          <div className="topbar-meta">
+            <span><MapPin size={17} /> Pune, Maharashtra</span>
+            <i />
+            <span><CalendarDays size={17} /> Urban Heat Adaptation</span>
           </div>
         </header>
-        <section className="page-content">
+        <main className="page-content">
           <Outlet />
-        </section>
-      </main>
+        </main>
+      </div>
     </div>
-  )
+  );
 }
-
-export default MainLayout

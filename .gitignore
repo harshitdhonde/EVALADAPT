@@ -1,8 +1,11 @@
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 Python
 
 .venv/ venv/ pycache/ *.py[cod] *.pyc .pytest_cache/
 =======
+=======
+>>>>>>> 6c3b8cd1e87365fc045aa61fdaf9b3ab764ec843
 # Python
 .venv/
 venv/
@@ -10,27 +13,27 @@ __pycache__/
 *.py[cod]
 *.pyc
 .pytest_cache/
+<<<<<<< HEAD
 venv/
 >>>>>>> Stashed changes
+=======
+>>>>>>> 6c3b8cd1e87365fc045aa61fdaf9b3ab764ec843
 
+# Database
 *.db
 
-Node
+# Node
+node_modules/
+frontend/node_modules/
+frontend/dist/
 
-node_modules/ frontend/node_modules/ frontend/dist/
+# Environment variables
+.env
+.env.*
 
-Environment variables
+# IDE
+.vscode/
+.idea/
 
-.env .env.*
-
-IDE
-
-.vscode/ .idea/
-
-OS
-
-.DS_Storevenv/
-.venv/
-__pycache__/
-*.pyc
-evaladapt.db
+# OS
+.DS_Store

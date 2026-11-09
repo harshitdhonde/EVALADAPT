@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap');
 
 :root {
   font-family: 'DM Sans', sans-serif;
@@ -7,6 +7,7 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   --plum: #432b43;
   --plum-soft: #785b76;
   --ink: #372b37;
@@ -16,11 +17,10 @@
   --surface: #fffdf9;
   --border: #e9dfd6;
   --muted: #817780;
+  --shadow: rgba(67, 43, 67, 0.12);
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 html {
   min-width: 320px;
@@ -32,6 +32,9 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background: var(--background);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.55;
 }
 
 button, input, select {
@@ -39,6 +42,7 @@ button, input, select {
 }
 
 a {
+  color: inherit;
   text-decoration: none;
 }
 
