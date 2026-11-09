@@ -1,44 +1,123 @@
+import { useEffect, useState } from "react";
 import {
   FileText, Download, CheckCircle2, AlertTriangle,
   Search, Target, TrendingDown, Users, ShieldCheck,
-  ArrowRight, Info
+  Info, ArrowRight
 } from "lucide-react";
+import {
+  getDecision, getOverview, getEvaluation,
+  getImpactEquity, getDiagnosis
+} from "../services/api";
 
-const evidence = [
-  {
-    category: "Expected temperature reduction",
-    result: "2.0°C",
-    status: "Program target"
-  },
-  {
-    category: "Observed temperature reduction",
-    result: "1.4°C",
-    status: "Below target"
-  },
-  {
-    category: "Difference-in-Differences estimate",
-    result: "0.9°C",
-    status: "Illustrative estimate"
-  },
-  {
-    category: "Intervention coverage",
-    result: "68%",
-    status: "Requires review"
-  },
-  {
-    category: "Equity assessment",
-    result: "Distribution gap",
-    status: "Requires investigation"
-  },
-  {
-    category: "AI-assisted diagnosis",
-    result: "3 potential findings",
-    status: "Illustrative output"
-  }
-];
+const format = (value, digits = 3) =>
+  typeof value === "number" ? value.toFixed(digits) : value ?? "—";
+
+const decisionDescriptions = {
+  CONTINUE: "Continue implementation while monitoring outcomes and maintaining evaluation.",
+  MODIFY: "Adjust implementation, targeting or resource allocation to address identified gaps.",
+  INVESTIGATE: "Collect additional evidence and examine uncertain outcomes before making further decisions."
+};
+
+const decisionIcons = {
+  CONTINUE: CheckCircle2,
+  MODIFY: Target,
+  INVESTIGATE: Search
+};
 
 export default function Reports() {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    Promise.all([
+      getDecision(),
+      getOverview(),
+      getEvaluation(),
+      getImpactEquity(),
+      getDiagnosis()
+    ])
+      .then(([decision, overview, evaluation, equity, diagnosis]) => {
+        setData({
+          decision: decision.data,
+          overview: overview.data,
+          evaluation: evaluation.data,
+          equity: equity.data,
+          diagnosis: diagnosis.data
+        });
+      })
+      .catch(() => {
+        setError("Unable to load the report. Check that the backend is running.");
+      });
+  }, []);
+
   const printReport = () => window.print();
+
+  if (error) {
+    return <div className="module-page"><p>{error}</p></div>;
+  }
+
+  if (!data) {
+    return <div className="module-page"><p>Loading evaluation report...</p></div>;
+  }
+
+  const { decision, overview, evaluation, equity, diagnosis } = data;
+  const kpis = overview.kpis;
+  const impact = evaluation.impact;
+  const equityData = equity.equity;
+  const actions = decision.recommended_actions || [];
+  const selectedDecision = decision.decision || "INVESTIGATE";
+  const DecisionIcon = decisionIcons[selectedDecision] || Search;
+
+  const evidence = [
+    {
+      category: "Expected temperature reduction",
+      result: `${format(kpis.expected_reduction_c)}°C`,
+      status: "Intervention target"
+    },
+    {
+      category: "Observed raw temperature reduction",
+      result: `${format(kpis.observed_raw_reduction_c)}°C`,
+      status: "Observed change"
+    },
+    {
+      category: "Estimated Difference-in-Differences impact",
+      result: `${format(impact.estimated_reduction_c)}°C`,
+      status: `95% CI: ${format(impact.ci_95_c?.[0])}–${format(impact.ci_95_c?.[1])}°C`
+    },
+    {
+      category: "Intervention effectiveness",
+      result: `${format(kpis.effectiveness_pct, 1)}%`,
+      status: impact.status
+    },
+    {
+      category: "Equity assessment",
+      result: equityData.verdict,
+      status: `Equity ratio: ${format(equityData.equity_ratio, 3)}`
+    },
+    {
+      category: "AI-assisted diagnosis",
+      result: `${diagnosis.anomalies.flagged.length} anomalies`,
+      status: `Model reliability: ${diagnosis.drivers.reliability}`
+    }
+  ];
+
+  const decisionOptions = [
+    {
+      name: "CONTINUE",
+      icon: CheckCircle2,
+      description: decisionDescriptions.CONTINUE
+    },
+    {
+      name: "MODIFY",
+      icon: Target,
+      description: decisionDescriptions.MODIFY
+    },
+    {
+      name: "INVESTIGATE",
+      icon: Search,
+      description: decisionDescriptions.INVESTIGATE
+    }
+  ];
 
   return (
     <div className="module-page report-page">
@@ -55,8 +134,7 @@ export default function Reports() {
       <div className="report-notice">
         <Info size={19} />
         <span>
-          PROTOTYPE REPORT — All displayed results are simulated.
-          They are not verified measurements or official Pune findings.
+          {overview.data_notice}
         </span>
       </div>
 
@@ -66,38 +144,38 @@ export default function Reports() {
             <div className="eyebrow">SYSTEM RECOMMENDATION</div>
             <h2>Recommended Action</h2>
           </div>
-          <span className="decision-status">DECISION PREVIEW</span>
+          <span className="decision-status">BACKEND DECISION</span>
         </div>
 
         <div className="decision-main">
           <div className="decision-icon">
-            <Search size={34} />
+            <DecisionIcon size={34} />
           </div>
           <div>
-            <span className="decision-label">INVESTIGATE</span>
-            <h3>Further evidence is required</h3>
-            <p>
-              The illustrative results indicate below-target performance
-              and differences in benefit distribution. Investigate the
-              underlying factors before deciding whether to continue or
-              modify the program.
-            </p>
+            <span className="decision-label">{selectedDecision}</span>
+            <h3>{decisionDescriptions[selectedDecision]}</h3>
+            <p>{decision.rationale}</p>
           </div>
         </div>
 
         <div className="decision-reasons">
-          <div>
-            <TrendingDown size={20} />
-            <span>Observed reduction is 0.6°C below target.</span>
-          </div>
-          <div>
-            <Users size={20} />
-            <span>Cooling benefits differ across vulnerability groups.</span>
-          </div>
-          <div>
-            <ShieldCheck size={20} />
-            <span>Results require validation with reliable field data.</span>
-          </div>
+          {Object.entries(decision.supporting_evidence || {}).map(([key, value]) => (
+            <div key={key}>
+              <ShieldCheck size={20} />
+              <span>
+                <strong>{key.replaceAll("_", " ")}: </strong>
+                {Array.isArray(value)
+                  ? value.map(item =>
+                      typeof item === "object"
+                        ? `${item.zone_id || ""} (${item.effectiveness_pct ?? ""}%)`
+                        : String(item)
+                    ).join(", ")
+                  : typeof value === "object" && value !== null
+                    ? JSON.stringify(value)
+                    : String(value)}
+              </span>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -105,22 +183,22 @@ export default function Reports() {
         <div className="report-kpi">
           <Target size={22} />
           <span>Target Reduction</span>
-          <strong>2.0°C</strong>
+          <strong>{format(kpis.expected_reduction_c)}°C</strong>
         </div>
         <div className="report-kpi">
           <TrendingDown size={22} />
-          <span>Observed Reduction</span>
-          <strong>1.4°C</strong>
+          <span>Estimated Impact</span>
+          <strong>{format(kpis.estimated_reduction_c)}°C</strong>
         </div>
         <div className="report-kpi">
           <Users size={22} />
-          <span>Coverage</span>
-          <strong>68%</strong>
+          <span>Effectiveness</span>
+          <strong>{format(kpis.effectiveness_pct, 1)}%</strong>
         </div>
         <div className="report-kpi">
           <AlertTriangle size={22} />
           <span>Overall Status</span>
-          <strong className="report-warning">Under Review</strong>
+          <strong className="report-warning">{selectedDecision}</strong>
         </div>
       </section>
 
@@ -163,44 +241,30 @@ export default function Reports() {
         <div className="eyebrow">DECISION FRAMEWORK</div>
         <h2>Possible Intervention Decisions</h2>
         <p className="panel-description">
-          EVALADAPT supports three possible decisions based on the
-          accumulated evaluation evidence.
+          EVALADAPT supports three possible decisions based on accumulated evidence.
         </p>
 
         <div className="decision-options">
-          <div className="decision-option">
-            <div className="option-icon continue-icon">
-              <CheckCircle2 size={25} />
-            </div>
-            <strong>CONTINUE</strong>
-            <p>
-              Continue implementation when outcomes meet expectations
-              and sufficient evidence supports performance.
-            </p>
-          </div>
+          {decisionOptions.map(option => {
+            const Icon = option.icon;
+            const isSelected = option.name === selectedDecision;
 
-          <div className="decision-option">
-            <div className="option-icon modify-icon">
-              <Target size={25} />
-            </div>
-            <strong>MODIFY</strong>
-            <p>
-              Adjust implementation, targeting or resource allocation
-              when validated evidence identifies correctable gaps.
-            </p>
-          </div>
-
-          <div className="decision-option selected-option">
-            <div className="option-icon investigate-icon">
-              <Search size={25} />
-            </div>
-            <strong>INVESTIGATE</strong>
-            <span className="selected-label">CURRENT PREVIEW</span>
-            <p>
-              Collect more evidence and examine uncertain or unequal
-              outcomes before making further decisions.
-            </p>
-          </div>
+            return (
+              <div
+                className={`decision-option ${isSelected ? "selected-option" : ""}`}
+                key={option.name}
+              >
+                <div className="option-icon">
+                  <Icon size={25} />
+                </div>
+                <strong>{option.name}</strong>
+                {isSelected && (
+                  <span className="selected-label">CURRENT DECISION</span>
+                )}
+                <p>{option.description}</p>
+              </div>
+            );
+          })}
         </div>
       </section>
 
@@ -209,33 +273,47 @@ export default function Reports() {
         <h2>From Evidence to Action</h2>
 
         <div className="action-list">
-          <div>
-            <span>01</span>
-            <div>
-              <strong>Validate field measurements</strong>
-              <p>Collect reliable before-and-after temperature observations.</p>
+          {actions.map((action, index) => (
+            <div key={index}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <div>
+                <strong>
+                  {typeof action === "string"
+                    ? action
+                    : action.title || action.action || JSON.stringify(action)}
+                </strong>
+                {typeof action === "object" && action.description && (
+                  <p>{action.description}</p>
+                )}
+              </div>
             </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="panel report-section">
+        <div className="eyebrow">DECISION TRANSPARENCY</div>
+        <h2>Rules & Evaluation Caveats</h2>
+
+        <div className="ai-limitations">
+          <Info size={20} />
+          <div>
+            <strong>Decision thresholds</strong>
+            <p>{JSON.stringify(decision.thresholds)}</p>
+            <p>{JSON.stringify(decision.rules_evaluated)}</p>
           </div>
+        </div>
+
+        <div className="ai-limitations">
+          <ShieldCheck size={20} />
           <div>
-            <span>02</span>
-            <div>
-              <strong>Review intervention coverage</strong>
-              <p>Identify areas where implementation may be insufficient.</p>
-            </div>
-          </div>
-          <div>
-            <span>03</span>
-            <div>
-              <strong>Investigate equity differences</strong>
-              <p>Examine whether vulnerable communities receive comparable benefits.</p>
-            </div>
-          </div>
-          <div>
-            <span>04</span>
-            <div>
-              <strong>Re-evaluate intervention performance</strong>
-              <p>Update the assessment after collecting additional evidence.</p>
-            </div>
+            <strong>Important limitations</strong>
+            {(decision.caveats || []).map((item, index) => (
+              <p key={index}>
+                {typeof item === "string" ? item : JSON.stringify(item)}
+              </p>
+            ))}
+            <p>{diagnosis.disclaimer}</p>
           </div>
         </div>
       </section>
@@ -258,8 +336,8 @@ export default function Reports() {
       <div className="report-disclaimer">
         <Info size={18} />
         <p>
-          This prototype demonstrates an evaluation and decision-support
-          workflow. Final recommendations must be based on validated data,
+          This prototype uses synthetic demonstration data, not verified Pune
+          field measurements. Final recommendations require validated data,
           appropriate causal evaluation methods and expert review.
         </p>
       </div>

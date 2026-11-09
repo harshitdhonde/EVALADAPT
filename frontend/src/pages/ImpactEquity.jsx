@@ -1,24 +1,9 @@
+import { useEffect, useState } from "react";
 import Plot from "react-plotly.js";
 import {
   Users, MapPinned, Scale, TrendingUp, AlertTriangle, Info
 } from "lucide-react";
-
-const wards = [
-  { name: "Aundh Ward", vulnerability: "Low", reduction: 1.65, coverage: 78 },
-  { name: "Baner Ward", vulnerability: "Low", reduction: 1.50, coverage: 72 },
-  { name: "Kothrud Ward", vulnerability: "High", reduction: 1.40, coverage: 68 },
-  { name: "Hadapsar Ward", vulnerability: "High", reduction: 1.25, coverage: 54 },
-  { name: "Pimpri Ward", vulnerability: "High", reduction: 1.10, coverage: 48 }
-];
-
-const high = wards.filter(w => w.vulnerability === "High");
-const low = wards.filter(w => w.vulnerability === "Low");
-
-const average = items =>
-  items.reduce((sum, item) => sum + item.reduction, 0) / items.length;
-
-const highAverage = average(high);
-const lowAverage = average(low);
+import { getImpactEquity } from "../services/api";
 
 const chartLayout = {
   autosize: true,
@@ -33,6 +18,41 @@ const chartLayout = {
 const config = { responsive: true, displaylogo: false };
 
 export default function ImpactEquity() {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    getImpactEquity()
+      .then(response => setData(response.data))
+      .catch(() => setError("Unable to load impact and equity data. Check that the backend is running."));
+  }, []);
+
+  if (error) {
+    return <div className="module-page"><p>{error}</p></div>;
+  }
+
+  if (!data) {
+    return <div className="module-page"><p>Loading impact and equity analysis...</p></div>;
+  }
+
+  const equity = data.equity;
+  const high = equity.groups.high;
+  const low = equity.groups.low;
+  const zones = data.zone_effects || [];
+
+  const highAverage = high.mean_estimated_reduction_c;
+  const lowAverage = low.mean_estimated_reduction_c;
+  const difference = lowAverage - highAverage;
+
+  const zoneColor = zone =>
+    String(zone.vulnerability_group).toLowerCase() === "high"
+      ? "#d49a43"
+      : "#10a981";
+
+  const sortedZones = [...zones].sort(
+    (a, b) => a.effectiveness_pct - b.effectiveness_pct
+  );
+
   return (
     <div className="module-page">
       <section className="module-hero">
@@ -48,8 +68,8 @@ export default function ImpactEquity() {
       <div className="equity-notice">
         <Info size={19} />
         <span>
-          SIMULATED PROTOTYPE DATA — Ward-level values and vulnerability
-          classifications are illustrative, not verified field measurements.
+          SYNTHETIC DEMONSTRATION DATA — These values are illustrative,
+          not verified Pune field measurements.
         </span>
       </div>
 
@@ -57,25 +77,28 @@ export default function ImpactEquity() {
         <div className="equity-kpi">
           <Users size={23} />
           <span>High Vulnerability Zones</span>
-          <strong>3</strong>
-          <small>Of 5 evaluation wards</small>
+          <strong>{high.n_zones}</strong>
+          <small>Of {high.n_zones + low.n_zones} treated zones</small>
         </div>
+
         <div className="equity-kpi">
           <Scale size={23} />
           <span>High Vulnerability Average</span>
-          <strong>{highAverage.toFixed(2)}°C</strong>
-          <small>Illustrative cooling reduction</small>
+          <strong>{highAverage.toFixed(3)}°C</strong>
+          <small>Estimated cooling reduction</small>
         </div>
+
         <div className="equity-kpi">
           <TrendingUp size={23} />
           <span>Low Vulnerability Average</span>
-          <strong>{lowAverage.toFixed(2)}°C</strong>
-          <small>Illustrative cooling reduction</small>
+          <strong>{lowAverage.toFixed(3)}°C</strong>
+          <small>Estimated cooling reduction</small>
         </div>
+
         <div className="equity-kpi">
           <MapPinned size={23} />
           <span>Average Group Difference</span>
-          <strong>{(lowAverage - highAverage).toFixed(2)}°C</strong>
+          <strong>{difference.toFixed(3)}°C</strong>
           <small>Low minus high vulnerability</small>
         </div>
       </section>
@@ -86,8 +109,8 @@ export default function ImpactEquity() {
             <div className="eyebrow">DISTRIBUTION OF BENEFITS</div>
             <h2>Cooling Benefits by Vulnerability</h2>
             <p className="panel-description">
-              Compare the average illustrative temperature reduction
-              across vulnerability groups.
+              Compare estimated average temperature reduction across
+              vulnerability groups.
             </p>
           </div>
         </div>
@@ -99,10 +122,10 @@ export default function ImpactEquity() {
               y: [highAverage, lowAverage],
               type: "bar",
               marker: { color: ["#d49a43", "#10a981"] },
-              text: [`${highAverage.toFixed(2)}°C`, `${lowAverage.toFixed(2)}°C`],
+              text: [`${highAverage.toFixed(3)}°C`, `${lowAverage.toFixed(3)}°C`],
               textposition: "outside",
               textfont: { color: "#f0f6f5", size: 15 },
-              hovertemplate: "%{x}: %{y:.2f}°C<extra></extra>"
+              hovertemplate: "%{x}: %{y:.3f}°C<extra></extra>"
             }]}
             layout={{
               ...chartLayout,
@@ -111,7 +134,7 @@ export default function ImpactEquity() {
               yaxis: {
                 ...chartLayout.yaxis,
                 title: "Average temperature reduction (°C)",
-                range: [0, 2]
+                rangemode: "tozero"
               }
             }}
             config={config}
@@ -123,13 +146,21 @@ export default function ImpactEquity() {
         <div className="equity-insight">
           <AlertTriangle size={22} />
           <div>
-            <strong>Potential distribution gap identified</strong>
+            <strong>
+              {equity.verdict === "UNEQUAL"
+                ? "Potential distribution gap identified"
+                : "No major distribution gap identified"}
+            </strong>
             <p>
-              In this simulated dataset, high-vulnerability wards show a
-              lower average cooling reduction than low-vulnerability wards.
-              This difference should be investigated alongside coverage,
+              High-vulnerability zones receive approximately{" "}
+              {equity.equity_ratio.toFixed(3)} times the cooling benefit
+              received by low-vulnerability zones. The group comparison
+              should be investigated alongside intervention coverage,
               baseline conditions and other relevant factors.
             </p>
+            <small>
+              Welch comparison p-value: {equity.welch_p_value.toFixed(4)}
+            </small>
           </div>
         </div>
       </section>
@@ -137,10 +168,10 @@ export default function ImpactEquity() {
       <section className="panel equity-panel">
         <div className="section-heading">
           <div>
-            <div className="eyebrow">WARD-LEVEL PERFORMANCE</div>
+            <div className="eyebrow">ZONE-LEVEL PERFORMANCE</div>
             <h2>Cooling Impact Across Evaluation Zones</h2>
             <p className="panel-description">
-              Examine how the simulated cooling benefit varies across wards.
+              Compare estimated cooling benefits across all treated zones.
             </p>
           </div>
         </div>
@@ -148,28 +179,25 @@ export default function ImpactEquity() {
         <div className="equity-chart">
           <Plot
             data={[{
-              x: wards.map(w => w.reduction),
-              y: wards.map(w => w.name),
+              x: sortedZones.map(zone => zone.effectiveness_pct),
+              y: sortedZones.map(zone => zone.zone_name),
               type: "bar",
               orientation: "h",
-              marker: {
-                color: wards.map(w =>
-                  w.vulnerability === "High" ? "#d49a43" : "#10a981"
-                )
-              },
-              text: wards.map(w => `${w.reduction.toFixed(2)}°C`),
+              marker: { color: sortedZones.map(zoneColor) },
+              text: sortedZones.map(zone => `${zone.effectiveness_pct.toFixed(1)}%`),
               textposition: "outside",
-              textfont: { color: "#f0f6f5", size: 13 },
-              hovertemplate: "%{y}: %{x:.2f}°C<extra></extra>"
+              textfont: { color: "#f0f6f5", size: 12 },
+              hovertemplate:
+                "%{y}: %{x:.1f}% effectiveness<extra></extra>"
             }]}
             layout={{
               ...chartLayout,
-              height: 340,
-              margin: { t: 20, r: 70, b: 50, l: 115 },
+              height: Math.max(380, sortedZones.length *  thirtyFive()),
+              margin: { t: 20, r: 75, b: 50, l: 115 },
               xaxis: {
                 ...chartLayout.xaxis,
-                title: "Temperature reduction (°C)",
-                range: [0, 2]
+                title: "Effectiveness (%)",
+                rangemode: "tozero"
               }
             }}
             config={config}
@@ -188,27 +216,33 @@ export default function ImpactEquity() {
         <div className="section-heading">
           <div>
             <div className="eyebrow">COVERAGE & ACCESS</div>
-            <h2>Intervention Coverage by Ward</h2>
+            <h2>Intervention Coverage by Zone</h2>
             <p className="panel-description">
-              Examine whether the intervention reaches all evaluation zones.
+              Examine roof coverage across treated evaluation zones.
             </p>
           </div>
         </div>
 
         <div className="coverage-list">
-          {wards.map(ward => (
-            <div className="coverage-item" key={ward.name}>
+          {sortedZones.map(zone => (
+            <div className="coverage-item" key={zone.zone_id}>
               <div className="coverage-label">
-                <strong>{ward.name}</strong>
-                <span>{ward.coverage}%</span>
+                <strong>{zone.zone_name}</strong>
+                <span>{zone.roof_coverage_pct.toFixed(1)}%</span>
               </div>
               <div className="coverage-track">
                 <div
-                  className={ward.vulnerability === "High" ? "coverage-fill high-fill" : "coverage-fill"}
-                  style={{ width: `${ward.coverage}%` }}
+                  className={
+                    String(zone.vulnerability_group).toLowerCase() === "high"
+                      ? "coverage-fill high-fill"
+                      : "coverage-fill"
+                  }
+                  style={{ width: `${zone.roof_coverage_pct}%` }}
                 />
               </div>
-              <small>{ward.vulnerability} vulnerability</small>
+              <small>
+                {zone.vulnerability_group} vulnerability
+              </small>
             </div>
           ))}
         </div>
@@ -223,7 +257,7 @@ export default function ImpactEquity() {
             <span className="diagnosis-number">01</span>
             <strong>Unequal coverage</strong>
             <p>
-              Check whether high-vulnerability wards receive adequate
+              Check whether high-vulnerability zones receive adequate
               intervention coverage.
             </p>
           </div>
@@ -231,7 +265,7 @@ export default function ImpactEquity() {
             <span className="diagnosis-number">02</span>
             <strong>Unequal outcomes</strong>
             <p>
-              Investigate why cooling benefits may differ between
+              Investigate why estimated cooling benefits differ between
               vulnerability groups.
             </p>
           </div>
@@ -250,11 +284,14 @@ export default function ImpactEquity() {
           <p>
             Vulnerability comparisons identify differences in outcomes;
             they do not independently establish discrimination, causality
-            or maladaptation. More detailed demographic and spatial data
-            are required for stronger conclusions.
+            or maladaptation. The reported association is not proof of cause.
           </p>
         </div>
       </section>
     </div>
   );
+}
+
+function thirtyFive() {
+  return 35;
 }
