@@ -1,4 +1,6 @@
 import Plot from "react-plotly.js";
+import { useEffect, useState } from "react";
+import { getHealth } from "../services/api";
 import {
   Thermometer, Target, ShieldCheck, BrainCircuit,
   Info, ArrowRight
@@ -37,6 +39,40 @@ function KpiCard({ icon: Icon, label, value, description, color }) {
 }
 
 export default function Overview() {
+  const [backendStatus, setBackendStatus] = useState("checking");
+
+  useEffect(() => {
+    let active = true;
+
+    getHealth()
+      .then((response) => {
+        if (active) {
+          setBackendStatus(
+            response.data?.status === "ok" ? "connected" : "disconnected"
+          );
+        }
+      })
+      .catch(() => {
+        if (active) setBackendStatus("disconnected");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const statusColor = {
+    checking: "#e5b85c",
+    connected: "#39c98a",
+    disconnected: "#ff6969"
+  };
+
+  const statusLabel = {
+    checking: "Checking backend...",
+    connected: "Backend connected",
+    disconnected: "Backend disconnected"
+  };
+
   return (
     <div className="dashboard">
       <section className="hero-section">
@@ -58,6 +94,32 @@ export default function Overview() {
             not field telemetry measurements from Pune municipal stations.
           </p>
         </div>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          padding: "12px 16px",
+          marginBottom: "20px",
+          background: "#14282d",
+          border: "1px solid #294047",
+          borderRadius: "10px",
+          width: "fit-content",
+          color: "#d5e4e5",
+          fontSize: "14px"
+        }}
+      >
+        <span
+          style={{
+            width: "9px",
+            height: "9px",
+            borderRadius: "50%",
+            background: statusColor[backendStatus]
+          }}
+        />
+        {statusLabel[backendStatus]}
       </div>
 
       <section className="kpi-grid">
