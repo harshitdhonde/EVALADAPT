@@ -31,8 +31,8 @@ function SplashScreen({ exiting }) {
           place-items: center;
           overflow: hidden;
           padding: 24px;
-          color: #fffdf9;
-          background: radial-gradient(circle at 50% 42%, #29364b 0%, #172234 48%, #101827 100%);
+          color: #4b2d43;
+          background: radial-gradient(circle at 50% 42%, #fffdf8 0%, #f7f0e8 58%, #eee2e8 100%);
           opacity: 1;
           transition: opacity 500ms ease, transform 500ms ease;
         }
@@ -42,7 +42,7 @@ function SplashScreen({ exiting }) {
           position: absolute;
           width: 340px;
           height: 340px;
-          border: 1px solid rgba(141, 106, 140, .2);
+          border: 1px solid rgba(111, 67, 96, .16);
           border-radius: 50%;
           animation: splash-orbit 7s linear infinite;
         }
@@ -50,7 +50,7 @@ function SplashScreen({ exiting }) {
           width: 470px;
           height: 470px;
           animation-direction: reverse;
-          border-color: rgba(141, 169, 190, .12);
+          border-color: rgba(111, 67, 96, .10);
         }
         .splash-content {
           position: relative;
@@ -68,13 +68,13 @@ function SplashScreen({ exiting }) {
           width: 62px;
           height: 62px;
           margin-bottom: 22px;
-          border: 1px solid rgba(234, 215, 228, .35);
+          border: 1px solid rgba(111, 67, 96, .25);
           border-radius: 18px;
-          color: #ead7e4;
-          background: rgba(120, 91, 118, .22);
+          color: #5b3651;
+          background: rgba(111, 67, 96, .08);
           font: 800 25px 'Manrope', sans-serif;
           letter-spacing: -1px;
-          box-shadow: 0 12px 40px rgba(0, 0, 0, .18);
+          box-shadow: 0 12px 40px rgba(91, 54, 81, .10);
         }
         .splash-title {
           margin: 0;
@@ -84,7 +84,7 @@ function SplashScreen({ exiting }) {
         }
         .splash-eyebrow {
           margin-top: 13px;
-          color: #c8b4c7;
+          color: #805b75;
           font-size: 11px;
           font-weight: 800;
           letter-spacing: 3px;
@@ -94,7 +94,7 @@ function SplashScreen({ exiting }) {
           height: 3px;
           margin: 27px 0 24px;
           border-radius: 10px;
-          background: #a57d9a;
+          background: #80516f;
           animation: splash-line-in 900ms 250ms ease both;
         }
         .splash-tagline {
@@ -105,7 +105,7 @@ function SplashScreen({ exiting }) {
         .splash-description {
           max-width: 490px;
           margin: 13px 0 0;
-          color: #b8c4d3;
+          color: #786778;
           font-size: 14px;
           line-height: 1.8;
         }
@@ -114,15 +114,15 @@ function SplashScreen({ exiting }) {
           align-items: center;
           gap: 10px;
           margin-top: 42px;
-          color: #aab8ca;
+          color: #806d7b;
           font-size: 11px;
           letter-spacing: .5px;
         }
         .splash-spinner {
           width: 14px;
           height: 14px;
-          border: 2px solid rgba(170, 184, 202, .25);
-          border-top-color: #c8b4c7;
+          border: 2px solid rgba(111, 67, 96, .16);
+          border-top-color: #80516f;
           border-radius: 50%;
           animation: splash-spin 900ms linear infinite;
         }
@@ -177,8 +177,8 @@ export default function App() {
   const [splashExiting, setSplashExiting] = useState(false);
 
   useEffect(() => {
-    const exitTimer = window.setTimeout(() => setSplashExiting(true), 2300);
-    const finishTimer = window.setTimeout(() => setShowSplash(false), 2800);
+    const exitTimer = window.setTimeout(() => setSplashExiting(true), 4000);
+    const finishTimer = window.setTimeout(() => setShowSplash(false), 4500);
 
     return () => {
       window.clearTimeout(exitTimer);
