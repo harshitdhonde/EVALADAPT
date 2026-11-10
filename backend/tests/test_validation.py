@@ -44,6 +44,7 @@ class PreprocessingValidationTests(unittest.TestCase):
 
     def test_non_numeric_measurement_is_rejected(self):
         data = sample_data()
+        data["population_density"] = data["population_density"].astype(object)
         data.loc[0, "population_density"] = "not-a-number"
         with self.assertRaisesRegex(ValueError, "population_density"):
             clean(data)
