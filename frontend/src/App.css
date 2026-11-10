@@ -3,9 +3,7 @@
   --sidebar: var(--plum);
   --panel: var(--surface);
   --panel-light: var(--milk-light);
-  --border: var(--border);
   --text: var(--ink);
-  --muted: var(--muted);
   --teal: var(--plum-soft);
   --green: #8d6a8c;
 }
