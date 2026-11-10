@@ -41,6 +41,30 @@ def clean(df):
             raise ValueError(f"Non-finite values found in column: {col}")
         df[col] = converted
 
+    # Validate domain-specific ranges before imputing missing values.
+    range_checks = {
+        "vulnerability_index": (0, 1),
+        "roof_coverage_pct": (0, 100),
+        "green_cover_pct": (0, 100),
+        "population_density": (0, None),
+        "expected_reduction_c": (0, None),
+        "lat": (-90, 90),
+        "lon": (-180, 180),
+    }
+    for col, (lower, upper) in range_checks.items():
+        values = df[col].dropna()
+        invalid = pd.Series(False, index=values.index)
+        if lower is not None:
+            invalid |= values < lower
+        if upper is not None:
+            invalid |= values > upper
+        if invalid.any():
+            bounds = f"{lower} to {upper}" if upper is not None else f"at least {lower}"
+            raise ValueError(
+                f"Values in column '{col}' must be {bounds}; "
+                f"found {values[invalid].iloc[0]}."
+            )
+
     # 1. Standardise group labels ("Treated ", "CONTROL" -> "treated", "control")
     df["group"] = df["group"].astype(str).str.strip().str.lower()
     bad = ~df["group"].isin(["treated", "control"])
