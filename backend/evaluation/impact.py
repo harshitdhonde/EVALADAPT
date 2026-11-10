@@ -28,6 +28,10 @@ def gap_series(df):
 def zone_effects(df):
     """Per-treated-zone DiD: zone change minus control-group change."""
     ctrl = df[df.treated == 0].groupby("period")["temp_c"].mean()
+    if not {"before", "after"} <= set(ctrl.index):
+        raise ValueError(
+            "Control zones must have observations in both intervention periods."
+        )
     ctrl_change = ctrl["after"] - ctrl["before"]
     rows = []
     for zid, g in df[df.treated == 1].groupby("zone_id"):
@@ -74,7 +78,12 @@ def impact_evaluation(df):
     eff = estimated / expected * 100 if expected > 0 else np.nan
 
     # Parallel-trends check on pre-period gap
-    pre = gap[gap.index < d[d.post == 1]["month"].min()]
+    pre = gap[gap.index < d[d.post == 1]["month"].min()].dropna()
+    if len(pre) < 2:
+        raise ValueError(
+            "At least two valid pre-intervention monthly observations "
+            "are required for the parallel-trends check."
+        )
     lr = stats.linregress(np.arange(len(pre)), pre.values)
     pt_ok = bool(lr.pvalue > 0.05)
 
