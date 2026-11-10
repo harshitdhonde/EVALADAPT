@@ -11,6 +11,10 @@ from backend.evaluation.spatial import spatial_evaluation
 
 def run_evaluation(df):
     ze = zone_effects(df)
+    if ze.empty:
+        raise ValueError(
+            "No treated zones have observations in both intervention periods."
+        )
     return {
         "impact": impact_evaluation(df),
         "temporal": temporal_evaluation(df),
