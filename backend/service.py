@@ -23,6 +23,26 @@ def validate_group_periods(df):
             f"Insufficient group-period observations: {missing}"
         )
 
+    treated_periods = (
+        df[df["group"] == "treated"]
+        .groupby("zone_id")["period"]
+        .agg(lambda values: set(values))
+    )
+    incomplete_zones = []
+    for zone_id, periods in treated_periods.items():
+        missing_periods = sorted({"before", "after"} - periods)
+        if missing_periods:
+            incomplete_zones.append(
+                f"{zone_id} (missing {', '.join(missing_periods)})"
+            )
+
+    if incomplete_zones:
+        raise ValueError(
+            "Every treated zone must have observations in both intervention "
+            "periods. Incomplete treated zones: "
+            f"{'; '.join(incomplete_zones[:10])}"
+        )
+
 
 def run_pipeline(raw_df, source):
     df, report = clean(raw_df)

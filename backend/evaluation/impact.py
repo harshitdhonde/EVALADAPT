@@ -44,8 +44,12 @@ def zone_effects(df):
     rows = []
     for zid, g in df[df.treated == 1].groupby("zone_id"):
         p = g.groupby("period")["temp_c"].mean()
-        if not {"before", "after"} <= set(p.index):
-            continue
+        missing_periods = sorted({"before", "after"} - set(p.index))
+        if missing_periods:
+            raise ValueError(
+                f"Treated zone {zid!r} is missing observations for "
+                f"intervention period(s): {', '.join(missing_periods)}."
+            )
         est = -((p["after"] - p["before"]) - ctrl_change)
         f = g.iloc[0]
         exp = float(f.expected_reduction_c)

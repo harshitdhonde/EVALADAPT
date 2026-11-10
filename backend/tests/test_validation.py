@@ -3,7 +3,7 @@ import unittest
 
 import pandas as pd
 
-from backend.evaluation.impact import pretrend_regression
+from backend.evaluation.impact import pretrend_regression, zone_effects
 from backend.evaluation.preprocessing import clean
 from backend.evaluation.spatial import match_zone_boundaries
 from backend.service import validate_group_periods
@@ -129,6 +129,36 @@ class GroupPeriodValidationTests(unittest.TestCase):
                             (cleaned["period"] == "after"))]
         with self.assertRaisesRegex(ValueError, "Insufficient group-period"):
             validate_group_periods(cleaned)
+
+    def test_each_treated_zone_requires_both_periods(self):
+        data = sample_data()
+        second_treated_zone = data[data["zone_id"] == "T1"].copy()
+        second_treated_zone["zone_id"] = "T2"
+        second_treated_zone["zone_name"] = "T2"
+        data = pd.concat([data, second_treated_zone], ignore_index=True)
+        data = data[~((data["zone_id"] == "T2") &
+                      (data["month"] >= "2025-01-01"))]
+        cleaned, _ = clean(data)
+
+        with self.assertRaisesRegex(
+            ValueError, "Incomplete treated zones: T2 .*missing after"
+        ):
+            validate_group_periods(cleaned)
+
+    def test_zone_effects_rejects_incomplete_treated_zone(self):
+        data = sample_data()
+        second_treated_zone = data[data["zone_id"] == "T1"].copy()
+        second_treated_zone["zone_id"] = "T2"
+        second_treated_zone["zone_name"] = "T2"
+        data = pd.concat([data, second_treated_zone], ignore_index=True)
+        data = data[~((data["zone_id"] == "T2") &
+                      (data["month"] >= "2025-01-01"))]
+        cleaned, _ = clean(data)
+
+        with self.assertRaisesRegex(
+            ValueError, "Treated zone 'T2'.*missing.*after"
+        ):
+            zone_effects(cleaned)
 
 
 class SpatialBoundaryValidationTests(unittest.TestCase):
