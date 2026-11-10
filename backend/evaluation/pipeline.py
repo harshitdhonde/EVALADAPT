@@ -19,7 +19,7 @@ def run_evaluation(df):
         "impact": impact_evaluation(df),
         "temporal": temporal_evaluation(df),
         "equity": equity_evaluation(ze),
-        "spatial": spatial_evaluation(ze),
+        "spatial": spatial_evaluation(ze, df["zone_id"].unique()),
         "zone_effects": ze.round(3).to_dict("records"),
     }
 
