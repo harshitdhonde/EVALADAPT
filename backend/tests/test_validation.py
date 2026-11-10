@@ -1,8 +1,9 @@
-"""Regression tests for dataset validation and evaluation edge cases."""
+""""Regression tests for dataset validation and evaluation edge cases."""
 import unittest
 
 import pandas as pd
 
+from backend.evaluation.impact import pretrend_regression
 from backend.evaluation.preprocessing import clean
 from backend.evaluation.spatial import match_zone_boundaries
 from backend.service import validate_group_periods
@@ -145,6 +146,20 @@ class SpatialBoundaryValidationTests(unittest.TestCase):
         zones = pd.DataFrame({"zone_id": ["Z01", "Z01"]})
         with self.assertRaisesRegex(ValueError, "duplicate zone_id"):
             match_zone_boundaries(zones, ["Z01"])
+
+
+class ParallelTrendsTests(unittest.TestCase):
+    def test_irregular_month_gaps_use_calendar_spacing(self):
+        months = pd.to_datetime(["2024-01-01", "2024-02-01", "2024-05-01"])
+        gap = pd.Series([0.0, 2.0, 8.0], index=months)
+        result = pretrend_regression(gap)
+        self.assertAlmostEqual(result.slope, 2.0)
+
+    def test_regular_months_keep_monthly_slope(self):
+        months = pd.to_datetime(["2024-01-01", "2024-02-01", "2024-03-01"])
+        gap = pd.Series([1.0, 3.0, 5.0], index=months)
+        result = pretrend_regression(gap)
+        self.assertAlmostEqual(result.slope, 2.0)
 
 
 if __name__ == "__main__":
