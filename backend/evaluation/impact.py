@@ -1,4 +1,4 @@
-"""Impact evaluation: expected vs observed vs estimated (DiD) cooling.
+""""Impact evaluation: expected vs observed vs estimated (DiD) cooling.
 Sign convention everywhere: positive number = cooling (temperature reduction, deg C)."""
 import numpy as np
 import pandas as pd
@@ -23,6 +23,14 @@ def gap_series(df):
     if "treated" not in g or "control" not in g:
         raise ValueError("Dataset needs both 'treated' and 'control' zones.")
     return (g["treated"] - g["control"]).sort_index(), g
+
+
+def pretrend_regression(pre_gap):
+    """Regress the pre-period gap on elapsed calendar months."""
+    months = pd.DatetimeIndex(pd.to_datetime(pre_gap.index))
+    month_numbers = months.year * 12 + months.month
+    elapsed_months = month_numbers - month_numbers[0]
+    return stats.linregress(elapsed_months, pre_gap.to_numpy())
 
 
 def zone_effects(df):
@@ -77,14 +85,14 @@ def impact_evaluation(df):
     expected = df[df.treated == 1].groupby("zone_id")["expected_reduction_c"].first().mean()
     eff = estimated / expected * 100 if expected > 0 else np.nan
 
-    # Parallel-trends check on pre-period gap
+    # Parallel-trends check on pre-period gap using actual calendar spacing
     pre = gap[gap.index < d[d.post == 1]["month"].min()].dropna()
     if len(pre) < 2:
         raise ValueError(
             "At least two valid pre-intervention monthly observations "
             "are required for the parallel-trends check."
         )
-    lr = stats.linregress(np.arange(len(pre)), pre.values)
+    lr = pretrend_regression(pre)
     pt_ok = bool(lr.pvalue > 0.05)
 
     if p >= 0.05:
