@@ -19,7 +19,12 @@ def temporal_evaluation(df):
         "period": "after" if m >= INTERVENTION_DATE else "before",
     } for m in gap.index]
 
-    post = cooling[cooling.index >= INTERVENTION_DATE]
+    post = cooling[cooling.index >= INTERVENTION_DATE].dropna()
+    if len(post) < 2:
+        raise ValueError(
+            "At least two valid post-intervention monthly observations "
+            "are required for temporal trend analysis."
+        )
     quarters = {}
     for m, v in post.items():
         quarters.setdefault(f"{m.year}-Q{(m.month - 1) // 3 + 1}", []).append(v)
