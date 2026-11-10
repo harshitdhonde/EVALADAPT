@@ -9,11 +9,24 @@ from backend.ai.diagnosis import run_diagnosis
 from backend.decision.engine import decide
 
 
+def validate_group_periods(df):
+    counts = df.groupby(["group", "period"]).size()
+    required = [
+        ("treated", "before"),
+        ("treated", "after"),
+        ("control", "before"),
+        ("control", "after"),
+    ]
+    missing = [key for key in required if counts.get(key, 0) == 0]
+    if missing:
+        raise ValueError(
+            f"Insufficient group-period observations: {missing}"
+        )
+
+
 def run_pipeline(raw_df, source):
     df, report = clean(raw_df)
-    if df["post"].nunique() < 2 or df["treated"].nunique() < 2:
-        raise ValueError("Dataset must contain both treated and control zones "
-                         "and both before- and after-intervention months.")
+    validate_group_periods(df)
     ev = run_evaluation(df)
     dg = run_diagnosis(pd.DataFrame(ev["zone_effects"]))
     dec = decide(ev, dg)
