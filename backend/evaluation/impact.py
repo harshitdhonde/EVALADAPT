@@ -1,4 +1,4 @@
-""""Impact evaluation: expected vs observed vs estimated (DiD) cooling.
+"""Impact evaluation: expected vs observed vs estimated (DiD) cooling.
 Sign convention everywhere: positive number = cooling (temperature reduction, deg C)."""
 import numpy as np
 import pandas as pd
