@@ -64,7 +64,7 @@ export default function Interventions() {
     reader.onload = (e) => {
       const firstLine = String(e.target.result || "").split(/\r?\n/)[0];
       const headers = firstLine.split(",").map(h =>
-        h.trim().replace(/^"|"$/g, "")
+        h.replace(/^\uFEFF/, "").trim().replace(/^"|"$/g, "")
       );
       const missing = requiredColumns.filter(col => !headers.includes(col));
 
