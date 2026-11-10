@@ -4,6 +4,7 @@ import unittest
 import pandas as pd
 
 from backend.evaluation.preprocessing import clean
+from backend.evaluation.spatial import match_zone_boundaries
 from backend.service import validate_group_periods
 
 
@@ -98,6 +99,23 @@ class GroupPeriodValidationTests(unittest.TestCase):
                             (cleaned["period"] == "after"))]
         with self.assertRaisesRegex(ValueError, "Insufficient group-period"):
             validate_group_periods(cleaned)
+
+
+class SpatialBoundaryValidationTests(unittest.TestCase):
+    def test_uploaded_zone_without_boundary_is_rejected(self):
+        zones = pd.DataFrame({"zone_id": ["Z01", "Z02"]})
+        with self.assertRaisesRegex(ValueError, "no matching map boundary"):
+            match_zone_boundaries(zones, ["Z01", "UNKNOWN"])
+
+    def test_only_uploaded_zones_are_returned(self):
+        zones = pd.DataFrame({"zone_id": ["Z01", "Z02", "Z03"]})
+        matched = match_zone_boundaries(zones, ["Z01", "Z03"])
+        self.assertEqual(matched["zone_id"].tolist(), ["Z01", "Z03"])
+
+    def test_duplicate_boundary_ids_are_rejected(self):
+        zones = pd.DataFrame({"zone_id": ["Z01", "Z01"]})
+        with self.assertRaisesRegex(ValueError, "duplicate zone_id"):
+            match_zone_boundaries(zones, ["Z01"])
 
 
 if __name__ == "__main__":
