@@ -10,10 +10,10 @@ const layout = {
   autosize: true,
   paper_bgcolor: "rgba(0,0,0,0)",
   plot_bgcolor: "rgba(0,0,0,0)",
-  font: { family: "DM Sans", color: "#c3d4d6" },
+  font: { family: "DM Sans", color: "var(--ink)" },
   margin: { t: 20, r: 25, b: 50, l: 55 },
-  xaxis: { gridcolor: "#263e45", linecolor: "#40565c" },
-  yaxis: { gridcolor: "#263e45", linecolor: "#40565c" }
+  xaxis: { gridcolor: "#e9dfd6", linecolor: "#d5c7d0" },
+  yaxis: { gridcolor: "#e9dfd6", linecolor: "#d5c7d0" }
 };
 
 const config = { responsive: true, displaylogo: false };
@@ -229,10 +229,10 @@ export default function Diagnosis() {
                 y: drivers.map(d => d.label),
                 type: "bar",
                 orientation: "h",
-                marker: { color: "#20a98a" },
+                marker: { color: "#785b76" },
                 text: drivers.map(d => `${(d.importance_share * 100).toFixed(1)}%`),
                 textposition: "outside",
-                textfont: { color: "#f0f6f5", size: 13 },
+                textfont: { color: "#372b37", size: 13 },
                 hovertemplate: "%{y}: %{x:.1f}%<extra></extra>"
               }]}
               layout={{
