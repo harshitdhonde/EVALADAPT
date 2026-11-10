@@ -13,6 +13,7 @@ REQUIRED_COLUMNS = [
 ]
 ZONE_LEVEL = ["vulnerability_index", "population_density", "green_cover_pct",
               "roof_coverage_pct", "expected_reduction_c", "lat", "lon"]
+NUMERIC_COLUMNS = ["temp_c", *ZONE_LEVEL]
 
 
 def validate_columns(df):
@@ -26,6 +27,20 @@ def clean(df):
     df = df.copy()
     report = {"rows_in": int(len(df))}
 
+    if df["zone_id"].isna().any():
+        raise ValueError("Dataset contains missing zone_id values.")
+
+    # Validate numeric fields before performing calculations.
+    for col in NUMERIC_COLUMNS:
+        original = df[col]
+        converted = pd.to_numeric(original, errors="coerce")
+        invalid = original.notna() & converted.isna()
+        if invalid.any():
+            raise ValueError(f"Invalid numerical values in column: {col}")
+        if not np.isfinite(converted.dropna()).all():
+            raise ValueError(f"Non-finite values found in column: {col}")
+        df[col] = converted
+
     # 1. Standardise group labels ("Treated ", "CONTROL" -> "treated", "control")
     df["group"] = df["group"].astype(str).str.strip().str.lower()
     bad = ~df["group"].isin(["treated", "control"])
@@ -37,9 +52,22 @@ def clean(df):
     report["bad_dates_dropped"] = int(df["month"].isna().sum())
     df = df.dropna(subset=["month"])
 
-    # 3. Remove duplicate zone-month records
+    # 3. Remove exact duplicate rows; reject conflicting zone-month records.
+    duplicate_keys = df.duplicated(subset=["zone_id", "month"], keep=False)
+    if duplicate_keys.any():
+        repeated = df.loc[duplicate_keys]
+        conflicting = repeated.groupby(["zone_id", "month"], dropna=False).nunique(
+            dropna=False
+        ).gt(1).any(axis=1)
+        if conflicting.any():
+            examples = [str(key) for key in conflicting[conflicting].index.tolist()[:5]]
+            raise ValueError(
+                "Conflicting records found for the same zone_id and month: "
+                f"{examples}"
+            )
+
     before = len(df)
-    df = df.drop_duplicates(subset=["zone_id", "month"], keep="first")
+    df = df.drop_duplicates()
     report["duplicates_removed"] = int(before - len(df))
 
     # 4. Physically implausible temperatures -> missing
@@ -52,12 +80,22 @@ def clean(df):
     for col in ZONE_LEVEL:
         df[col] = df.groupby("zone_id")[col].transform(lambda s: s.fillna(s.median()))
 
+    unresolved = df[ZONE_LEVEL].isna().sum()
+    unresolved = unresolved[unresolved > 0]
+    if not unresolved.empty:
+        raise ValueError(
+            "Unable to fill missing zone attributes: "
+            f"{unresolved.to_dict()}"
+        )
+
     # 6. Fill missing temperatures by linear interpolation within each zone
     df = df.sort_values(["zone_id", "month"]).reset_index(drop=True)
     report["temp_missing_interpolated"] = int(df["temp_c"].isna().sum())
     df["temp_c"] = df.groupby("zone_id")["temp_c"].transform(
         lambda s: s.interpolate(limit_direction="both"))
     df = df.dropna(subset=["temp_c"])
+    if df.empty:
+        raise ValueError("No usable temperature observations remain after cleaning.")
 
     # 7. Derived columns used by later modules
     df["period"] = np.where(df["month"] < INTERVENTION_DATE, "before", "after")
