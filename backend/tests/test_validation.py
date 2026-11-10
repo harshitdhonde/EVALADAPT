@@ -56,6 +56,35 @@ class PreprocessingValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Non-finite"):
             clean(data)
 
+    def test_out_of_range_values_are_rejected(self):
+        invalid_values = {
+            "vulnerability_index": 1.1,
+            "roof_coverage_pct": 100.1,
+            "green_cover_pct": -0.1,
+            "population_density": -1,
+            "expected_reduction_c": -0.1,
+            "lat": 90.1,
+            "lon": -180.1,
+        }
+        for column, value in invalid_values.items():
+            with self.subTest(column=column):
+                data = sample_data()
+                data.loc[0, column] = value
+                with self.assertRaisesRegex(ValueError, column):
+                    clean(data)
+
+    def test_range_boundary_values_are_accepted(self):
+        data = sample_data()
+        data.loc[:, "vulnerability_index"] = 0
+        data.loc[:, "roof_coverage_pct"] = 100
+        data.loc[:, "green_cover_pct"] = 0
+        data.loc[:, "population_density"] = 0
+        data.loc[:, "expected_reduction_c"] = 0
+        data.loc[:, "lat"] = 90
+        data.loc[:, "lon"] = -180
+        cleaned, _ = clean(data)
+        self.assertEqual(len(cleaned), 8)
+
     def test_all_missing_zone_attribute_is_rejected(self):
         data = sample_data()
         data.loc[data["zone_id"] == "T1", "green_cover_pct"] = None
