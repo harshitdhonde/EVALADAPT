@@ -15,11 +15,20 @@ def run_evaluation(df):
         raise ValueError(
             "No treated zones have observations in both intervention periods."
         )
+    zone_attributes = (
+        df.sort_values("month")
+        .drop_duplicates("zone_id")[
+            ["zone_id", "zone_name", "group", "vulnerability_index",
+             "roof_coverage_pct"]
+        ]
+    )
     return {
         "impact": impact_evaluation(df),
         "temporal": temporal_evaluation(df),
         "equity": equity_evaluation(ze),
-        "spatial": spatial_evaluation(ze, df["zone_id"].unique()),
+        "spatial": spatial_evaluation(
+            ze, zone_attributes, df["zone_id"].unique()
+        ),
         "zone_effects": ze.round(3).to_dict("records"),
     }
 

@@ -27,6 +27,49 @@ def match_zone_boundaries(zones, dataset_zone_ids):
     return zones[zones["zone_id"].isin(dataset_ids)].copy()
 
 
+def merge_uploaded_zone_attributes(zones, zone_attributes):
+    """Replace bundled zone metadata with attributes from the uploaded dataset."""
+    required = [
+        "zone_id", "zone_name", "group",
+        "vulnerability_index", "roof_coverage_pct",
+    ]
+    missing = [column for column in required if column not in zone_attributes.columns]
+    if missing:
+        raise ValueError(
+            f"Uploaded zone attributes are missing required columns: {missing}"
+        )
+
+    if zone_attributes["zone_id"].duplicated().any():
+        duplicates = zone_attributes.loc[
+            zone_attributes["zone_id"].duplicated(), "zone_id"
+        ].unique().tolist()
+        raise ValueError(
+            "Uploaded zone attributes contain duplicate zone_id values: "
+            f"{duplicates[:5]}"
+        )
+
+    boundary_ids = set(zones["zone_id"])
+    attribute_ids = set(zone_attributes["zone_id"])
+    unmatched = sorted(boundary_ids - attribute_ids, key=str)
+    if unmatched:
+        raise ValueError(
+            "Uploaded dataset is missing attributes for zone_id values: "
+            f"{unmatched[:10]}"
+        )
+
+    # Keep boundary geometry, but do not retain stale metadata from GeoJSON.
+    stale_columns = [column for column in required if column != "zone_id"
+                     and column in zones.columns]
+    zones = zones.drop(columns=stale_columns)
+    merged = zones.merge(
+        zone_attributes[required],
+        on="zone_id",
+        how="left",
+        validate="one_to_one",
+    )
+    return merged
+
+
 def category(eff):
     if eff != eff:  # NaN -> control zone
         return "control"
@@ -37,9 +80,10 @@ def category(eff):
     return "weak"
 
 
-def spatial_evaluation(ze, dataset_zone_ids):
+def spatial_evaluation(ze, zone_attributes, dataset_zone_ids):
     zones = gpd.read_file(ZONES_GEOJSON)
     zones = match_zone_boundaries(zones, dataset_zone_ids)
+    zones = merge_uploaded_zone_attributes(zones, zone_attributes)
     zones["area_km2"] = zones.to_crs(epsg=32643).area / 1e6  # UTM 43N (Pune)
     cols = ["zone_id", "estimated_reduction_c", "effectiveness_pct"]
     g = zones.merge(ze[cols], on="zone_id", how="left")

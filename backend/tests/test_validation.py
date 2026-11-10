@@ -5,7 +5,9 @@ import pandas as pd
 
 from backend.evaluation.impact import pretrend_regression, zone_effects
 from backend.evaluation.preprocessing import clean
-from backend.evaluation.spatial import match_zone_boundaries
+from backend.evaluation.spatial import (
+    match_zone_boundaries, merge_uploaded_zone_attributes,
+)
 from backend.service import validate_group_periods
 
 
@@ -176,6 +178,57 @@ class SpatialBoundaryValidationTests(unittest.TestCase):
         zones = pd.DataFrame({"zone_id": ["Z01", "Z01"]})
         with self.assertRaisesRegex(ValueError, "duplicate zone_id"):
             match_zone_boundaries(zones, ["Z01"])
+
+    def test_uploaded_attributes_replace_stale_boundary_metadata(self):
+        boundaries = pd.DataFrame({
+            "zone_id": ["Z01"],
+            "zone_name": ["Bundled Zone"],
+            "group": ["control"],
+            "vulnerability_index": [0.2],
+            "roof_coverage_pct": [10.0],
+            "geometry": ["boundary-shape"],
+        })
+        uploaded = pd.DataFrame({
+            "zone_id": ["Z01"],
+            "zone_name": ["Uploaded Zone"],
+            "group": ["treated"],
+            "vulnerability_index": [0.85],
+            "roof_coverage_pct": [72.0],
+        })
+
+        merged = merge_uploaded_zone_attributes(boundaries, uploaded)
+
+        self.assertEqual(merged.loc[0, "zone_name"], "Uploaded Zone")
+        self.assertEqual(merged.loc[0, "group"], "treated")
+        self.assertEqual(merged.loc[0, "vulnerability_index"], 0.85)
+        self.assertEqual(merged.loc[0, "roof_coverage_pct"], 72.0)
+        self.assertEqual(merged.loc[0, "geometry"], "boundary-shape")
+
+    def test_missing_uploaded_zone_attributes_are_rejected(self):
+        boundaries = pd.DataFrame({"zone_id": ["Z01", "Z02"]})
+        uploaded = pd.DataFrame({
+            "zone_id": ["Z01"],
+            "zone_name": ["Uploaded Zone"],
+            "group": ["treated"],
+            "vulnerability_index": [0.85],
+            "roof_coverage_pct": [72.0],
+        })
+
+        with self.assertRaisesRegex(ValueError, "missing attributes.*Z02"):
+            merge_uploaded_zone_attributes(boundaries, uploaded)
+
+    def test_duplicate_uploaded_zone_attributes_are_rejected(self):
+        boundaries = pd.DataFrame({"zone_id": ["Z01"]})
+        uploaded = pd.DataFrame({
+            "zone_id": ["Z01", "Z01"],
+            "zone_name": ["First", "Second"],
+            "group": ["treated", "treated"],
+            "vulnerability_index": [0.8, 0.9],
+            "roof_coverage_pct": [70.0, 80.0],
+        })
+
+        with self.assertRaisesRegex(ValueError, "duplicate zone_id"):
+            merge_uploaded_zone_attributes(boundaries, uploaded)
 
 
 class ParallelTrendsTests(unittest.TestCase):
